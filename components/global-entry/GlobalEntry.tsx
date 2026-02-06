@@ -3,23 +3,29 @@ import { MonitorControl } from './MonitorControl';
 import { SlotsList } from './SlotsList';
 import { SystemStatus, MostRecentSlot } from './StatusCard';
 import { SlotsTrendChart } from './SlotsTrendChart';
+import { ActionButtons } from './ActionButtons';
 import { fetchLocations, fetchSlots } from './api';
 import { Location, Slot, SlotResponse } from './types';
 import { sendExtensionMessage } from './extension-bridge';
 
 export const GlobalEntry = () => {
+    const getInitialRunning = () => localStorage.getItem('ged_isRunning') === 'true';
+    const getInitialSlots = () => {
+        const savedRunning = localStorage.getItem('ged_isRunning') === 'true';
+        if (!savedRunning) {
+            return [];
+        }
+        const saved = localStorage.getItem('ged_slots');
+        return saved ? JSON.parse(saved) : [];
+    };
+
     const [locations, setLocations] = useState<Location[]>([]);
     const hasResyncedExtensionRef = useRef(false);
 
     // Initialize state from local storage
-    const [isRunning, setIsRunning] = useState(() => {
-        return localStorage.getItem('ged_isRunning') === 'true';
-    });
+    const [isRunning, setIsRunning] = useState(getInitialRunning);
 
-    const [slots, setSlots] = useState<Slot[]>(() => {
-        const saved = localStorage.getItem('ged_slots');
-        return saved ? JSON.parse(saved) : [];
-    });
+    const [slots, setSlots] = useState<Slot[]>(getInitialSlots);
 
     const [loading, setLoading] = useState(false);
     const [lastChecked, setLastChecked] = useState<Date | null>(() => {
@@ -111,6 +117,7 @@ export const GlobalEntry = () => {
                 } else {
                     // Sync stop from extension
                     setIsRunning(false);
+                    setSlots([]);
                     hasResyncedExtensionRef.current = false;
                 }
             }
@@ -157,6 +164,7 @@ export const GlobalEntry = () => {
 
     const handleStop = () => {
         setIsRunning(false);
+        setSlots([]); // Clear slots when stopped
         hasResyncedExtensionRef.current = false;
         sendExtensionMessage('WEB_STOP');
     };
@@ -177,6 +185,9 @@ export const GlobalEntry = () => {
                         isRunning={isRunning}
                         lastChecked={lastChecked}
                     />
+                    <div className="flex-1 flex flex-col justify-end mt-auto">
+                        <ActionButtons />
+                    </div>
                 </div>
                 <div className="lg:col-span-3">
                     <SlotsList
