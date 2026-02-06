@@ -13,6 +13,7 @@ export interface ChartDataPoint {
 
 export enum TabOption {
   Users = 'Users',
+  GlobalEntry = 'Global Entry',
   OpsStatus = 'Ops Status',
   Projects = 'Projects'
 }
