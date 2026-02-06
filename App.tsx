@@ -3,6 +3,7 @@ import { Header } from './components/Header';
 // import { Sidebar } from './components/Sidebar'; // Available for future use
 import { Controls, KPIHeader } from './components/Controls';
 import { GlobalEntry } from './components/global-entry/GlobalEntry';
+import { OpsStatus } from './components/ops-status/OpsStatus';
 // Charts available for future use:
 // import { UserGrowthChart } from './components/charts/UserGrowthChart';
 // import { DeviceTrafficChart } from './components/charts/DeviceTrafficChart';
@@ -31,6 +32,8 @@ export default function App() {
 
             {activeTab === TabOption.GlobalEntry ? (
               <GlobalEntry />
+            ) : activeTab === TabOption.OpsStatus ? (
+              <OpsStatus />
             ) : (
               <KPIHeader />
             )}

@@ -7,6 +7,7 @@ import { ActionButtons } from './ActionButtons';
 import { fetchLocations, fetchSlots } from './api';
 import { Location, Slot, SlotResponse } from './types';
 import { sendExtensionMessage } from './extension-bridge';
+import { logRecent } from '../recents';
 
 export const GlobalEntry = () => {
     const getInitialRunning = () => localStorage.getItem('ged_isRunning') === 'true';
@@ -155,6 +156,14 @@ export const GlobalEntry = () => {
         const params = { locationId, startDate, endDate };
         setMonitorParams(params);
         setIsRunning(true);
+        if (selectedLocation) {
+            logRecent({
+                title: selectedLocation.name,
+                description: `Monitoring visa slots ${startDate} to ${endDate}`,
+                locationQuery: `${selectedLocation.name} Global Entry`,
+                source: 'global-entry'
+            });
+        }
         sendExtensionMessage('WEB_START', {
             ...params,
             tzData: selectedLocation?.tzData || '',

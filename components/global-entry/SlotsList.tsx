@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ExternalLink, Clock, Calendar } from 'lucide-react';
 
 import { sendExtensionMessage } from './extension-bridge';
+import { logRecent } from '../recents';
 
 interface SlotsListProps {
     slots: Slot[];
@@ -58,6 +59,13 @@ export const SlotsList: React.FC<SlotsListProps> = ({
             slotTimestamp: slot.timestamp,
             slotDisplay: `${formatDate(slot.timestamp)} ${formatTime(slot.timestamp)}`,
             tzData: tzData || ''
+        });
+
+        logRecent({
+            title: locationName || 'Global Entry Slot',
+            description: `Attempted booking: ${formatDate(slot.timestamp)} ${formatTime(slot.timestamp)}`,
+            locationQuery: locationName ? `${locationName} Global Entry` : undefined,
+            source: 'global-entry'
         });
     };
 
