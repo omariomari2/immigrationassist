@@ -31,7 +31,7 @@ const DEFAULT_CENTER: [number, number] = [37.7749, -122.4194];
 
 const RESOURCE_TABS: Array<{ id: ResourceCategory; label: string }> = [
     { id: 'recents', label: 'Recents' },
-    { id: 'lawyers', label: 'Immigration Lawyers' },
+    { id: 'lawyers', label: 'Legal Aid' },
     { id: 'surgeons', label: 'Civil Surgeons' },
     { id: 'shelter', label: 'Shelter' },
     { id: 'ice', label: 'ICE Status' }
@@ -250,7 +250,7 @@ const mapRecentToResource = (recent: RecentItem, coordinates?: [number, number])
     };
 };
 
-export function OpsStatus() {
+export function OpsStatus({ onNavigateToGlobalEntry }: { onNavigateToGlobalEntry?: () => void }) {
     const [activeResourceTab, setActiveResourceTab] = useState<ResourceCategory>('recents');
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -404,7 +404,7 @@ export function OpsStatus() {
                                     </div>
                                 </div>
 
-                                <div className="flex flex-wrap gap-2 mb-4">
+                                <div className="grid grid-cols-3 gap-2 mb-4">
                                     {RESOURCE_TABS.map((tab) => (
                                         <button
                                             key={tab.id}
@@ -417,6 +417,12 @@ export function OpsStatus() {
                                             {tab.label}
                                         </button>
                                     ))}
+                                    <button
+                                        onClick={onNavigateToGlobalEntry}
+                                        className="px-3 py-2 text-[11px] font-medium rounded-xl transition-all bg-gray-100 text-gray-500 hover:bg-gray-200"
+                                    >
+                                        Book Visa
+                                    </button>
                                 </div>
 
                                 <div className="flex-1 overflow-y-auto space-y-3 pr-1">

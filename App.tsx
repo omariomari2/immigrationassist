@@ -33,7 +33,7 @@ export default function App() {
             {activeTab === TabOption.GlobalEntry ? (
               <GlobalEntry />
             ) : activeTab === TabOption.OpsStatus ? (
-              <OpsStatus />
+              <OpsStatus onNavigateToGlobalEntry={() => setActiveTab(TabOption.GlobalEntry)} />
             ) : (
               <KPIHeader />
             )}
