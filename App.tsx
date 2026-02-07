@@ -1,21 +1,24 @@
 import React, { useState } from 'react';
 import { Header } from './components/Header';
-// import { Sidebar } from './components/Sidebar'; // Available for future use
 import { Controls, KPIHeader } from './components/Controls';
 import { GlobalEntry } from './components/global-entry/GlobalEntry';
 import { OpsStatus } from './components/ops-status/OpsStatus';
+import { UserProvider, useUser } from './components/UserContext';
+import { LoginPage } from './components/auth/LoginPage';
+import { SignupPage } from './components/auth/SignupPage';
+import { UserProfileCard } from './components/UserProfileCard';
 const ProjectsDashboard = React.lazy(() =>
   import('./components/projects/ProjectsDashboard').then((module) => ({
     default: module.ProjectsDashboard
   }))
 );
-// Charts available for future use:
-// import { UserGrowthChart } from './components/charts/UserGrowthChart';
-// import { DeviceTrafficChart } from './components/charts/DeviceTrafficChart';
-// import { IncomeChart } from './components/charts/IncomeChart';
 import { TabOption } from './types';
 
-export default function App() {
+type AuthPage = 'login' | 'signup';
+
+function AppContent() {
+  const { isAuthenticated, isLoading } = useUser();
+  const [authPage, setAuthPage] = useState<AuthPage>('login');
   const [activeTab, setActiveTab] = useState<TabOption>(() => {
     const saved = localStorage.getItem('quantro_active_tab');
     return (saved as TabOption) || TabOption.Users;
@@ -25,10 +28,27 @@ export default function App() {
     localStorage.setItem('quantro_active_tab', activeTab);
   }, [activeTab]);
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-bgPrimary flex items-center justify-center font-sans">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-8 h-8 border-3 border-gray-300 border-t-black rounded-full animate-spin"></div>
+          <p className="text-sm text-textSecondary">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    if (authPage === 'login') {
+      return <LoginPage onSwitchToSignup={() => setAuthPage('signup')} />;
+    }
+    return <SignupPage onSwitchToLogin={() => setAuthPage('login')} />;
+  }
+
   return (
     <div className="min-h-screen bg-bgPrimary pb-12 font-sans selection:bg-green-200">
       <div className="w-full lg:max-w-[85vw] mx-auto pt-6 px-4 sm:px-8">
-        {/* Main Content Card Wrapper */}
         <div className="bg-bgPrimary rounded-none sm:rounded-3xl overflow-hidden">
           <Header />
 
@@ -50,7 +70,10 @@ export default function App() {
                 <ProjectsDashboard />
               </React.Suspense>
             ) : (
-              <KPIHeader />
+              <>
+                <KPIHeader />
+                <UserProfileCard />
+              </>
             )}
           </main>
         </div>
@@ -58,3 +81,12 @@ export default function App() {
     </div>
   );
 }
+
+export default function App() {
+  return (
+    <UserProvider>
+      <AppContent />
+    </UserProvider>
+  );
+}
+

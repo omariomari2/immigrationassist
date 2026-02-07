@@ -1,6 +1,6 @@
 import React from 'react';
 import { TabOption } from '../types';
-import { Plus, Grip, List, Calendar, RefreshCw, ChevronDown } from 'lucide-react';
+import { Calendar, RefreshCw, ChevronDown } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface ControlsProps {
@@ -11,7 +11,6 @@ interface ControlsProps {
 export const Controls: React.FC<ControlsProps> = ({ activeTab, onTabChange }) => {
   return (
     <div className="flex flex-col gap-6 mb-8">
-      {/* Top Row: Title & Actions */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-baseline gap-3">
           <h1 className="text-2xl font-medium text-textPrimary">Overview</h1>
@@ -24,7 +23,6 @@ export const Controls: React.FC<ControlsProps> = ({ activeTab, onTabChange }) =>
           </div>
         </div>
 
-        {/* Tabs */}
         <div className="flex bg-white p-1 rounded-xl shadow-sm">
           {Object.values(TabOption).map((tab) => (
             <button
@@ -46,26 +44,39 @@ export const Controls: React.FC<ControlsProps> = ({ activeTab, onTabChange }) =>
             </button>
           ))}
         </div>
-
-
       </div>
     </div>
   );
 };
 
+import { useUser } from './UserContext';
+import { calculateVisaCountdown } from '../utils/dateUtils';
+
 export const KPIHeader: React.FC = () => {
-  // Count up animation logic would go here, simplified for now
+  const { user } = useUser();
+  const userName = user ? `${user.firstName} ${user.lastName}` : 'Guest';
+
+  let headerTitle = "Welcome back";
+  let headerValue = userName;
+  let subValue = null;
+
+  if (user?.visaExpirationDate) {
+    headerTitle = "Visa Expiration Countdown";
+    headerValue = calculateVisaCountdown(user.visaExpirationDate);
+    // If it returns a string like "X Months, Y Days", we display that.
+    // If "Expired", we display that.
+  }
+
   return (
     <div className="flex flex-col gap-1 mb-8">
       <div className="flex justify-between items-end">
         <div>
-          <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Total Number of Users</h3>
-          <div className="text-6xl sm:text-7xl font-semibold tracking-tight text-gray-800 leading-none">
-            122,872,<span className="text-gray-400/80">886</span>
+          <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">{headerTitle}</h3>
+          <div className="text-4xl sm:text-5xl font-semibold tracking-tight text-gray-800 leading-none">
+            {headerValue}
           </div>
         </div>
 
-        {/* Date Filter */}
         <div className="flex gap-2 mb-2">
           <button className="p-2 bg-white rounded-lg text-gray-400 hover:text-gray-600 shadow-sm transition-colors">
             <RefreshCw className="w-3.5 h-3.5" />
@@ -80,3 +91,4 @@ export const KPIHeader: React.FC = () => {
     </div>
   )
 }
+

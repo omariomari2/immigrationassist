@@ -1,12 +1,18 @@
+import { useUser } from "../../UserContext";
 import { NewsFeed } from "./NewsFeed";
 import { UserProfile } from "./types";
 
-const DEFAULT_PROFILE: UserProfile = {
-    name: "User",
-    visaType: "F-1"
-};
-
 export function NewsProject() {
+    const { user } = useUser();
+
+    // Default to F-1 if no visa status is set
+    const currentVisaType = user?.visaStatus || "F-1";
+
+    const profile: UserProfile = {
+        name: user ? `${user.firstName} ${user.lastName}` : "Guest",
+        visaType: currentVisaType
+    };
+
     return (
         <div className="p-6">
             <div className="flex flex-col gap-6">
@@ -20,11 +26,11 @@ export function NewsProject() {
                         </h2>
                     </div>
                     <span className="text-xs font-medium bg-gray-800 text-white px-3 py-1.5 rounded-lg">
-                        {DEFAULT_PROFILE.visaType} Visa
+                        {currentVisaType} Visa
                     </span>
                 </div>
 
-                <NewsFeed profile={DEFAULT_PROFILE} />
+                <NewsFeed profile={profile} />
             </div>
         </div>
     );

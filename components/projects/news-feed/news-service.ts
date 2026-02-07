@@ -7,7 +7,7 @@ const responseCache = new Map<string, CachedResponse>();
 const inFlight = new Map<string, Promise<NewsItem[]>>();
 
 function makeCacheKey(profile: UserProfile) {
-    return (profile?.visaType || "immigration").toLowerCase();
+    return (profile?.visaType || "f1").toLowerCase();
 }
 
 function mapArticles(items: unknown): NewsItem[] {
