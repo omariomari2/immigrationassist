@@ -4,9 +4,9 @@ import { Header } from './components/Header';
 import { Controls, KPIHeader } from './components/Controls';
 import { GlobalEntry } from './components/global-entry/GlobalEntry';
 import { OpsStatus } from './components/ops-status/OpsStatus';
-const H1BAnalytics = React.lazy(() =>
-  import('./components/projects/h1b-analytics/H1BAnalytics').then((module) => ({
-    default: module.H1BAnalytics
+const ProjectsDashboard = React.lazy(() =>
+  import('./components/projects/ProjectsDashboard').then((module) => ({
+    default: module.ProjectsDashboard
   }))
 );
 // Charts available for future use:
@@ -47,7 +47,7 @@ export default function App() {
                   </div>
                 }
               >
-                <H1BAnalytics />
+                <ProjectsDashboard />
               </React.Suspense>
             ) : (
               <KPIHeader />
