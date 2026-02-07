@@ -1,33 +1,23 @@
 import React, { useMemo } from 'react';
-import { EmployerDataFile } from './types';
-import { getTotalFilingsForYear } from './utils';
+import { EmployerSummaryResponse } from './types';
 
 interface H1BKPIHeaderProps {
-    employerData: EmployerDataFile;
+    summary: EmployerSummaryResponse;
 }
 
-export function H1BKPIHeader({ employerData }: H1BKPIHeaderProps) {
+export function H1BKPIHeader({ summary }: H1BKPIHeaderProps) {
     const latestYear = useMemo(() => {
-        const range = employerData.metadata?.yearRange || '';
+        const range = summary.metadata?.yearRange || '';
         const match = range.match(/(\d{4})\s*-\s*(\d{4})/);
         if (match) {
             return Number(match[2]);
         }
-
-        let maxYear = 0;
-        for (const employer of employerData.employers) {
-            for (const entry of employer.yearlyHistory) {
-                if (entry.year > maxYear) {
-                    maxYear = entry.year;
-                }
-            }
-        }
-        return maxYear || new Date().getFullYear();
-    }, [employerData]);
+        return summary.latestYear || new Date().getFullYear();
+    }, [summary]);
 
     const totalFilings = useMemo(() => {
-        return getTotalFilingsForYear(employerData, latestYear);
-    }, [employerData, latestYear]);
+        return summary.totalFilingsLatestYear || 0;
+    }, [summary, latestYear]);
 
     const formatted = totalFilings.toLocaleString();
     const parts = formatted.split(',');

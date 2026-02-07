@@ -17,3 +17,9 @@ export enum TabOption {
   OpsStatus = 'Ops Status',
   Projects = 'Projects'
 }
+
+export enum MegaTab {
+  Dashboard = 'Dashboard',
+  SourceOfTruth = 'SourceOfTruth',
+  Resources = 'Resources'
+}

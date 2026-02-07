@@ -3,14 +3,14 @@ import { H1BStatsChart } from './H1BStatsChart';
 import { TrendChart } from './TrendChart';
 import { OpportunitiesPanel } from './OpportunitiesPanel';
 import { CompanyNewsPanel } from './CompanyNewsPanel';
-import { EmployerData, EmployerDataFile } from './types';
+import { EmployerData, EmployerSummaryResponse } from './types';
 
 interface H1BAnalyticsContentProps {
-    employerData: EmployerDataFile;
+    summary: EmployerSummaryResponse;
     selectedEmployer: EmployerData | null;
 }
 
-export function H1BAnalyticsContent({ employerData, selectedEmployer }: H1BAnalyticsContentProps) {
+export function H1BAnalyticsContent({ summary, selectedEmployer }: H1BAnalyticsContentProps) {
     if (!selectedEmployer) {
         return (
             <div className="bg-white rounded-3xl shadow-soft p-8 text-sm text-gray-500">
@@ -34,7 +34,7 @@ export function H1BAnalyticsContent({ employerData, selectedEmployer }: H1BAnaly
                         Understanding Data
                     </span>
                     H1B approval rates vary by employer, job category, and candidate qualifications.
-                    This data (FY {employerData.metadata.yearRange}) shows historical decisions but does not guarantee future results.
+                    This data (FY {summary.metadata.yearRange}) shows historical decisions but does not guarantee future results.
                 </p>
 
                 <div className="text-center">

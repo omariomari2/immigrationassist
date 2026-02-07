@@ -19,6 +19,7 @@ export interface Opportunity {
 }
 
 export interface EmployerData {
+    id?: number;
     name: string;
     city: string;
     state: string;
@@ -33,13 +34,33 @@ export interface EmployerData {
     opportunities?: Opportunity[];
 }
 
+export interface EmployerSummary {
+    id: number;
+    name: string;
+    city: string;
+    state: string;
+    approvalRate: number;
+    totalCases: number;
+}
+
 export interface EmployerDataFile {
     employers: EmployerData[];
-    searchIndex: Record<string, number | number[]>;
     metadata: {
         totalEmployers: number;
         includedEmployers: number;
         yearRange: string;
         lastUpdated: string;
     };
+}
+
+export interface EmployerSummaryResponse {
+    metadata: {
+        totalEmployers: number;
+        includedEmployers: number;
+        yearRange: string;
+        lastUpdated: string;
+    };
+    latestYear: number;
+    totalFilingsLatestYear: number;
+    topEmployers: EmployerSummary[];
 }

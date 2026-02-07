@@ -10,6 +10,69 @@ from bs4 import BeautifulSoup
 from pypdf import PdfReader
 from rank_bm25 import BM25Okapi
 
+DEFAULT_CODE_EXTS = {
+    ".ts", ".tsx", ".js", ".jsx", ".json", ".md", ".txt", ".py", ".ps1",
+    ".html", ".css", ".scss", ".yml", ".yaml", ".toml", ".xml", ".sql"
+}
+DEFAULT_CODE_FILENAMES = {"readme", "readme.md", "license", "license.md", "dockerfile", "makefile"}
+DEFAULT_EXCLUDE_DIRS = {
+    ".git", "node_modules", ".venv", "dist", "build", "public", "data",
+    "csvs", "corpus", "index", "index_codebase", "__pycache__", ".cache", ".next", ".vite",
+    ".idea", ".vscode", "logs"
+}
+DEFAULT_EXCLUDE_FILES = {".groq_key"}
+DEFAULT_MAX_FILE_BYTES = 300_000
+
+RAG_SOURCE = os.environ.get("RAG_SOURCE", "codebase").strip().lower()
+SYSTEM_PROMPT_CODEBASE = (
+    "You are a software assistant for this codebase. Answer using ONLY the provided context (CONTEXT block and any system context). "
+    "If the context is missing info, say so. Cite the specific source file name(s). Keep answers concise."
+)
+SYSTEM_PROMPT_IMMIGRATION = (
+    "You are an expert immigration law assistant using the Quantro dashboard. "
+    "Answer using ONLY the provided context (CONTEXT block and any system context). If the context is missing info, say so. "
+    "Cite the specific source document (e.g., 'According to INA 212...'). Keep answers concise."
+)
+
+def normalize_lower_set(items):
+    if not items:
+        return None
+    return {str(x).lower() for x in items}
+
+def is_excluded_file(name, exclude_names):
+    lower = name.lower()
+    if exclude_names and lower in exclude_names:
+        return True
+    if lower.startswith(".env"):
+        return True
+    if lower.endswith(".key") or lower.endswith(".pem"):
+        return True
+    return False
+
+def walk_files(root_dir, include_exts=None, include_names=None, exclude_dirs=None, exclude_names=None, max_bytes=None):
+    include_exts = normalize_lower_set(include_exts)
+    include_names = normalize_lower_set(include_names)
+    exclude_dirs = normalize_lower_set(exclude_dirs)
+    exclude_names = normalize_lower_set(exclude_names)
+
+    for root, dirs, files in os.walk(root_dir):
+        if exclude_dirs:
+            dirs[:] = [d for d in dirs if d.lower() not in exclude_dirs]
+        for name in files:
+            if is_excluded_file(name, exclude_names):
+                continue
+            ext = os.path.splitext(name)[1].lower()
+            if include_exts:
+                if ext not in include_exts and (not include_names or name.lower() not in include_names):
+                    continue
+            path = os.path.join(root, name)
+            try:
+                if max_bytes and os.path.getsize(path) > max_bytes:
+                    continue
+            except Exception:
+                continue
+            yield path
+
 
 def ensure_dir(p):
     pathlib.Path(p).mkdir(parents=True, exist_ok=True)
@@ -179,24 +242,33 @@ def tokenize(s):
     parts = [p for p in s.split() if p]
     return parts
 
-def build_index(corpus_dir, index_dir):
+def latest_source_mtime(root_dir, include_exts=None, include_names=None, exclude_dirs=None, exclude_names=None, max_bytes=None):
+    latest = 0
+    for path in walk_files(root_dir, include_exts, include_names, exclude_dirs, exclude_names, max_bytes):
+        try:
+            mt = os.path.getmtime(path)
+            if mt > latest:
+                latest = mt
+        except Exception:
+            continue
+    return latest
+
+def build_index(corpus_dir, index_dir, include_exts=None, include_names=None, exclude_dirs=None, exclude_names=None, max_bytes=None, meta_extra=None):
     ensure_dir(index_dir)
     items = []
-    for root, _, files in os.walk(corpus_dir):
-        for name in files:
-            path = os.path.join(root, name)
-            text = extract_text_from_file(path)
-            if not text:
-                continue
-            base = os.path.relpath(path, corpus_dir)
-            chunks = chunk_text(text)
-            for k, ch in enumerate(chunks):
-                items.append({
-                    "id": sha1(base + "::" + str(k)),
-                    "source": base,
-                    "chunk_index": k,
-                    "text": ch,
-                })
+    for path in walk_files(corpus_dir, include_exts, include_names, exclude_dirs, exclude_names, max_bytes):
+        text = extract_text_from_file(path)
+        if not text:
+            continue
+        base = os.path.relpath(path, corpus_dir)
+        chunks = chunk_text(text)
+        for k, ch in enumerate(chunks):
+            items.append({
+                "id": sha1(base + "::" + str(k)),
+                "source": base,
+                "chunk_index": k,
+                "text": ch,
+            })
 
     texts = [it["text"] for it in items]
     tokens = [tokenize(t) for t in texts]
@@ -210,6 +282,8 @@ def build_index(corpus_dir, index_dir):
         "count": len(items),
         "built_at_unix": int(time.time()),
     }
+    if meta_extra:
+        meta.update(meta_extra)
     write_text(os.path.join(index_dir, "meta.json"), json.dumps(meta, indent=2))
 
     import pickle
@@ -263,7 +337,9 @@ def generate_answer(api_key, index_dir, query, history=[]):
     client = Groq(api_key=api_key)
     model = "llama-3.3-70b-versatile"
     
-    system = "You are an expert immigration law assistant using the Quantro dashboard. Answer using ONLY the provided context. If the context is missing info, say so. Cite the specific source document (e.g., 'According to INA 212...'). Keep answers concise."
+    system = os.environ.get("RAG_SYSTEM_PROMPT")
+    if not system:
+        system = SYSTEM_PROMPT_CODEBASE if RAG_SOURCE == "codebase" else SYSTEM_PROMPT_IMMIGRATION
 
     hits = retrieve(items, bm25, query, k=5)
     ctx = format_context(hits)
@@ -288,32 +364,81 @@ def generate_answer(api_key, index_dir, query, history=[]):
         return f"Error creating response: {e}", []
 
 def initialize_corpus():
-    corpus_dir = os.path.join(os.getcwd(), "corpus")
-    index_dir = os.path.join(os.getcwd(), "index")
-    ensure_dir(corpus_dir)
+    source_mode = RAG_SOURCE
+    if source_mode in ("immigration", "uscis", "law"):
+        corpus_dir = os.path.join(os.getcwd(), "corpus")
+        index_dir = os.path.join(os.getcwd(), "index")
+        ensure_dir(corpus_dir)
+        ensure_dir(index_dir)
+
+        corpus_files = [f for f in os.listdir(corpus_dir) if os.path.isfile(os.path.join(corpus_dir, f))]
+        if not corpus_files:
+            print("Downloading immigration law corpus (one-time)...")
+            saved = download_starter_corpus(corpus_dir)
+            print(f"   Downloaded {len(saved)} files")
+
+        index_file = os.path.join(index_dir, "bm25.pkl")
+        needs_rebuild = not os.path.exists(index_file)
+
+        if not needs_rebuild:
+            corpus_mtime = max(os.path.getmtime(os.path.join(corpus_dir, f)) for f in os.listdir(corpus_dir))
+            index_mtime = os.path.getmtime(index_file)
+            if corpus_mtime > index_mtime:
+                needs_rebuild = True
+                print("Corpus changed, rebuilding index...")
+
+        if needs_rebuild:
+            print("Building search index...")
+            meta = build_index(corpus_dir, index_dir, meta_extra={"source_mode": "immigration", "source_root": corpus_dir})
+            print(f"   Indexed {meta['count']} chunks")
+
+        return index_dir
+
+    codebase_root = os.environ.get("RAG_CODEBASE_ROOT")
+    if not codebase_root:
+        codebase_root = os.path.abspath(os.path.join(os.getcwd(), ".."))
+
+    index_dir = os.path.join(os.getcwd(), "index_codebase")
     ensure_dir(index_dir)
 
-    corpus_files = [f for f in os.listdir(corpus_dir) if os.path.isfile(os.path.join(corpus_dir, f))]
-    if not corpus_files:
-        print("📥 Downloading immigration law corpus (one-time)...")
-        saved = download_starter_corpus(corpus_dir)
-        print(f"   Downloaded {len(saved)} files\n")
+    include_exts = DEFAULT_CODE_EXTS
+    include_names = DEFAULT_CODE_FILENAMES
+    exclude_dirs = set(DEFAULT_EXCLUDE_DIRS)
+    exclude_names = set(DEFAULT_EXCLUDE_FILES)
+
+    extra_excludes = os.environ.get("RAG_EXCLUDE_DIRS")
+    if extra_excludes:
+        for part in extra_excludes.split(","):
+            part = part.strip().lower()
+            if part:
+                exclude_dirs.add(part)
+
+    max_bytes = int(os.environ.get("RAG_MAX_FILE_BYTES", str(DEFAULT_MAX_FILE_BYTES)))
 
     index_file = os.path.join(index_dir, "bm25.pkl")
     needs_rebuild = not os.path.exists(index_file)
-    
+
     if not needs_rebuild:
-        corpus_mtime = max(os.path.getmtime(os.path.join(corpus_dir, f)) for f in os.listdir(corpus_dir))
+        source_mtime = latest_source_mtime(codebase_root, include_exts, include_names, exclude_dirs, exclude_names, max_bytes)
         index_mtime = os.path.getmtime(index_file)
-        if corpus_mtime > index_mtime:
+        if source_mtime > index_mtime:
             needs_rebuild = True
-            print("📝 Corpus changed, rebuilding index...")
-    
+            print("Codebase changed, rebuilding index...")
+
     if needs_rebuild:
-        print("🔨 Building search index...")
-        meta = build_index(corpus_dir, index_dir)
-        print(f"   Indexed {meta['count']} chunks\n")
-    
+        print("Building codebase index...")
+        meta = build_index(
+            codebase_root,
+            index_dir,
+            include_exts=include_exts,
+            include_names=include_names,
+            exclude_dirs=exclude_dirs,
+            exclude_names=exclude_names,
+            max_bytes=max_bytes,
+            meta_extra={"source_mode": "codebase", "source_root": codebase_root}
+        )
+        print(f"Indexed {meta['count']} chunks")
+
     return index_dir
 
 if __name__ == "__main__":

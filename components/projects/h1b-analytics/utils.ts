@@ -1,47 +1,67 @@
-import type { EmployerData, EmployerDataFile } from './types';
+import type { EmployerData, EmployerSummary, EmployerSummaryResponse } from './types';
 
-let cachedEmployerData: EmployerDataFile | null = null;
-let inFlight: Promise<EmployerDataFile> | null = null;
+export const API_BASE = 'http://localhost:8001';
 
-export const globalAverageApprovalRate = 95.0; // Hardcoded or calculated
+let cachedSummary: EmployerSummaryResponse | null = null;
+let summaryInFlight: Promise<EmployerSummaryResponse> | null = null;
 
-// Optimization: Freeze large dataset to bypass React's reactivity overhead
-function deepFreeze(object: any) {
-    const propNames = Object.getOwnPropertyNames(object);
-    for (const name of propNames) {
-        const value = object[name];
-        if (value && typeof value === "object") {
-            deepFreeze(value);
-        }
+const employerCache = new Map<number, EmployerData>();
+
+export const globalAverageApprovalRate = 95.0;
+
+async function fetchJson<T>(url: string): Promise<T> {
+    const response = await fetch(url, { cache: 'no-cache' });
+    if (!response.ok) {
+        throw new Error(`Request failed: ${response.status}`);
     }
-    return Object.freeze(object);
+    return response.json() as Promise<T>;
 }
 
-export async function loadEmployerData(): Promise<EmployerDataFile> {
-    if (cachedEmployerData) return cachedEmployerData;
-    if (inFlight) return inFlight;
+export async function checkH1bApiHealth(timeoutMs: number = 2000): Promise<boolean> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-    inFlight = fetch('/employerData.json', { cache: 'no-cache' })
-        .then(async (response) => {
-            if (!response.ok) {
-                throw new Error(`Failed to load employer data: ${response.status}`);
-            }
-            const data = await response.json();
+    try {
+        const response = await fetch(`${API_BASE}/health`, { cache: 'no-cache', signal: controller.signal });
+        return response.ok;
+    } catch {
+        return false;
+    } finally {
+        clearTimeout(timer);
+    }
+}
 
-            // FREEZE DATA: detailed optimization to prevent React from proxifying 45MB of data
-            deepFreeze(data);
+export async function loadEmployerSummary(): Promise<EmployerSummaryResponse> {
+    if (cachedSummary) return cachedSummary;
+    if (summaryInFlight) return summaryInFlight;
 
-            cachedEmployerData = data as EmployerDataFile;
-            return cachedEmployerData;
+    summaryInFlight = fetchJson<EmployerSummaryResponse>(`${API_BASE}/h1b/summary`)
+        .then((data) => {
+            cachedSummary = data;
+            return data;
         })
         .finally(() => {
-            inFlight = null;
+            summaryInFlight = null;
         });
 
-    return inFlight;
+    return summaryInFlight;
 }
 
-// Helper functions for approval levels
+export async function searchEmployers(query: string, limit: number = 20): Promise<EmployerSummary[]> {
+    const trimmed = query.trim();
+    if (!trimmed || trimmed.length < 2) return [];
+    const url = `${API_BASE}/h1b/search?q=${encodeURIComponent(trimmed)}&limit=${limit}`;
+    const data = await fetchJson<{ results: EmployerSummary[] }>(url);
+    return data.results || [];
+}
+
+export async function fetchEmployerById(id: number): Promise<EmployerData> {
+    if (employerCache.has(id)) return employerCache.get(id)!;
+    const data = await fetchJson<EmployerData>(`${API_BASE}/h1b/employer?id=${id}`);
+    employerCache.set(id, data);
+    return data;
+}
+
 export const getApprovalLevel = (rate: number) => {
     if (rate >= 98) return 'Exceptional';
     if (rate >= 90) return 'High';
@@ -60,57 +80,4 @@ export const getApprovalStyles = (level: string) => {
         default:
             return { color: '#EF4444', bg: 'bg-red-50', border: 'border-red-100', text: 'text-red-800', label: 'Low', icon: 'text-red-600' };
     }
-};
-
-export const searchEmployers = (data: EmployerDataFile, query: string): EmployerData[] => {
-    const trimmed = query.trim();
-    if (!trimmed || trimmed.length < 2) return [];
-    const lowerQuery = trimmed.toLowerCase();
-
-    const indices = new Set<number>();
-
-    const directMatch = data.searchIndex[lowerQuery];
-    if (directMatch !== undefined) {
-        if (Array.isArray(directMatch)) directMatch.forEach(idx => indices.add(idx));
-        else indices.add(directMatch);
-    }
-
-    const words = lowerQuery.split(/\s+/).filter(word => word.length > 2);
-    for (const word of words) {
-        const match = data.searchIndex[word];
-        if (match !== undefined) {
-            if (Array.isArray(match)) match.forEach(idx => indices.add(idx));
-            else indices.add(match);
-        }
-    }
-
-    if (indices.size === 0) {
-        // Fallback: linear scan for partial matches across all employers.
-        for (let i = 0; i < data.employers.length; i += 1) {
-            const emp = data.employers[i];
-            if (emp.name.toLowerCase().includes(lowerQuery)) {
-                indices.add(i);
-                if (indices.size >= 50) break;
-            }
-        }
-    }
-
-    return Array.from(indices)
-        .map(idx => data.employers[idx])
-        .filter(Boolean)
-        .slice(0, 20);
-};
-
-export const getTopEmployers = (data: EmployerDataFile, count: number = 10): EmployerData[] => {
-    return data.employers.slice(0, count);
-};
-
-export const getTotalFilingsForYear = (data: EmployerDataFile, year: number): number => {
-    return data.employers.reduce((total, employer) => {
-        const yearData = employer.yearlyHistory.find(y => y.year === year);
-        if (yearData) {
-            return total + yearData.approvals + yearData.denials;
-        }
-        return total;
-    }, 0);
 };

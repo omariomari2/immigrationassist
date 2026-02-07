@@ -5,23 +5,30 @@ import { TrendChart } from './TrendChart';
 import { OpportunitiesPanel } from './OpportunitiesPanel';
 import { H1BSearchHeader } from './H1BSearchHeader';
 import { H1BKPIHeader } from './H1BKPIHeader';
-import { EmployerData, EmployerDataFile } from './types';
-import { loadEmployerData } from './utils';
+import { EmployerData, EmployerSummary, EmployerSummaryResponse } from './types';
+import { checkH1bApiHealth, fetchEmployerById, loadEmployerSummary } from './utils';
 
 export function H1BAnalytics() {
-    const [employerData, setEmployerData] = useState<EmployerDataFile | null>(null);
+    const [summary, setSummary] = useState<EmployerSummaryResponse | null>(null);
     const [selectedEmployer, setSelectedEmployer] = useState<EmployerData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [apiOnline, setApiOnline] = useState<boolean | null>(null);
 
     useEffect(() => {
         let isActive = true;
 
-        loadEmployerData()
-            .then((data) => {
+        loadEmployerSummary()
+            .then(async (data) => {
                 if (!isActive) return;
-                setEmployerData(data);
-                setSelectedEmployer((prev) => prev || data.employers[0] || null);
+                setSummary(data);
+                if (!selectedEmployer) {
+                    const first = data.topEmployers?.[0];
+                    if (first) {
+                        const details = await fetchEmployerById(first.id);
+                        if (isActive) setSelectedEmployer(details);
+                    }
+                }
             })
             .catch((err) => {
                 if (!isActive) return;
@@ -29,6 +36,24 @@ export function H1BAnalytics() {
             })
             .finally(() => {
                 if (isActive) setIsLoading(false);
+            });
+
+        return () => {
+            isActive = false;
+        };
+    }, []);
+
+    useEffect(() => {
+        let isActive = true;
+        setApiOnline(null);
+        checkH1bApiHealth()
+            .then((ok) => {
+                if (!isActive) return;
+                setApiOnline(ok);
+            })
+            .catch(() => {
+                if (!isActive) return;
+                setApiOnline(false);
             });
 
         return () => {
@@ -44,7 +69,7 @@ export function H1BAnalytics() {
         );
     }
 
-    if (error || !employerData) {
+    if (error || !summary) {
         return (
             <div className="bg-white rounded-3xl shadow-soft p-8 text-sm text-red-500">
                 {error || 'Employer data unavailable.'}
@@ -52,14 +77,28 @@ export function H1BAnalytics() {
         );
     }
 
+    const handleSelectEmployer = async (employer: EmployerSummary) => {
+        try {
+            const details = await fetchEmployerById(employer.id);
+            setSelectedEmployer(details);
+        } catch (err) {
+            setSelectedEmployer(null);
+        }
+    };
+
     return (
         <div className="flex flex-col gap-6">
+            {apiOnline === false && (
+                <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-xs text-red-700 shadow-soft">
+                    H1B API is offline. Start the chatbot server on port <span className="font-semibold">8001</span> and refresh.
+                </div>
+            )}
             <div className="flex justify-between items-end">
-                <H1BKPIHeader employerData={employerData} />
+                <H1BKPIHeader summary={summary} />
                 <H1BSearchHeader
-                    employerData={employerData}
+                    summary={summary}
                     selectedEmployer={selectedEmployer}
-                    onSelect={(employer) => setSelectedEmployer(employer)}
+                    onSelect={handleSelectEmployer}
                 />
             </div>
 
@@ -84,7 +123,7 @@ export function H1BAnalytics() {
                                 Understanding Data
                             </span>
                             H1B approval rates vary by employer, job category, and candidate qualifications.
-                            This data (FY {employerData.metadata.yearRange}) shows historical decisions but does not guarantee future results.
+                            This data (FY {summary.metadata.yearRange}) shows historical decisions but does not guarantee future results.
                         </p>
 
                         <div className="text-center">

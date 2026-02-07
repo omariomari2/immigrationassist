@@ -1,33 +1,34 @@
 Write-Host "`n========================================" -ForegroundColor Cyan
-Write-Host "  Quantro Ecosystem Shutdown" -ForegroundColor Cyan
+Write-Host "  Quantro Ecosystem Shutdown (Fast)" -ForegroundColor Cyan
 Write-Host "========================================`n" -ForegroundColor Cyan
 
-$jobs = Get-Job | Where-Object { $_.Name -in @("Quantro Main", "News Provider", "Status Dashboard", "DeepSeek Proxy", "Global Entry API") }
-
-if ($jobs.Count -gt 0) {
+# 1. Stop Background Jobs (Fastest)
+$jobs = Get-Job
+if ($jobs) {
     Write-Host "Stopping $($jobs.Count) background job(s)..." -ForegroundColor Yellow
     $jobs | Stop-Job -PassThru | Remove-Job
     Write-Host "  Background jobs removed" -ForegroundColor Green
 }
 
-$ports = @(5500, 3000, 5173, 8787, 4000)
+# 2. Kill Processes by Port (Batched)
+$ports = @(5500, 3000, 5173, 8787, 4000, 8001)
+Write-Host "Checking ports: $($ports -join ', ')..." -ForegroundColor Yellow
 
-foreach ($port in $ports) {
-    $connections = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue
-    
-    if ($connections) {
-        foreach ($conn in $connections) {
-            $process = Get-Process -Id $conn.OwningProcess -ErrorAction SilentlyContinue
-            if ($process) {
-                Write-Host "Stopping process on port $port (PID: $($process.Id), Name: $($process.Name))..." -ForegroundColor Yellow
-                Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
-            }
+# Single WMI call (much faster than looping)
+$connections = Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue | Where-Object { $_.LocalPort -in $ports }
+
+if ($connections) {
+    $uniquePids = $connections.OwningProcess | Select-Object -Unique
+    foreach ($pid_num in $uniquePids) {
+        # Optional: Get name for UI (can be skipped for max speed, but nice to have)
+        $proc = Get-Process -Id $pid_num -ErrorAction SilentlyContinue
+        if ($proc) {
+            Write-Host "  Killing $($proc.Name) (PID: $pid_num)..." -ForegroundColor Red
+            Stop-Process -Id $pid_num -Force -ErrorAction SilentlyContinue
         }
-        Write-Host "  Port $port cleared" -ForegroundColor Green
     }
-    else {
-        Write-Host "  Port $port - no process found" -ForegroundColor DarkGray
-    }
+} else {
+    Write-Host "  No active listeners found on target ports." -ForegroundColor Gray
 }
 
 Write-Host "`n========================================" -ForegroundColor Green

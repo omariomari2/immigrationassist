@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useUser } from './UserContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, X, Send, Bot, User, Loader2, FileText } from 'lucide-react';
 
@@ -14,9 +15,10 @@ interface Message {
 }
 
 export const Chatbot: React.FC = () => {
+    const { user } = useUser();
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<Message[]>([
-        { role: 'assistant', content: 'Hello! I am your immigration law assistant. Ask me about INA, FAM, or USCIS policies.' }
+        { role: 'assistant', content: 'Hello! I can answer questions about this Quantro codebase and data. Ask me anything.' }
     ]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -51,12 +53,22 @@ export const Chatbot: React.FC = () => {
                 content: m.content
             }));
 
-            const response = await fetch('http://localhost:8000/chat', {
+            const response = await fetch('http://localhost:8001/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     query: userMsg,
-                    history: history
+                    history: history,
+                    context: {
+                        currentTime: new Date().toLocaleString(),
+                        user: user ? {
+                            name: `${user.firstName} ${user.lastName}`,
+                            email: user.email,
+                            visaType: (user as any).visaType,
+                            priorityDate: (user as any).priorityDate,
+                            receiptNumber: (user as any).receiptNumber
+                        } : 'Guest',
+                    }
                 })
             });
 
@@ -99,7 +111,7 @@ export const Chatbot: React.FC = () => {
                                     <Bot size={18} />
                                 </div>
                                 <div>
-                                    <h3 className="text-sm font-semibold text-gray-900">Law Assistant</h3>
+                                    <h3 className="text-sm font-semibold text-gray-900">Quantro Assistant</h3>
                                     <p className="text-[10px] text-gray-500">Powered by Groq & RAG</p>
                                 </div>
                             </div>

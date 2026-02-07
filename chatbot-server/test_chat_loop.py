@@ -1,7 +1,7 @@
 import requests
 import time
 
-url = "http://localhost:8000/chat"
+url = "http://localhost:8001/chat"
 headers = {'Content-Type': 'application/json'}
 
 queries = [

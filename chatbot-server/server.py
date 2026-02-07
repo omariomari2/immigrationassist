@@ -5,7 +5,14 @@ import os
 import rag_core
 from typing import List, Optional
 
+import data_loader
+
 app = FastAPI()
+
+
+@app.on_event("startup")
+async def startup_event():
+    pass
 
 app.add_middleware(
     CORSMiddleware,
@@ -28,10 +35,34 @@ class ChatMessage(BaseModel):
 class ChatRequest(BaseModel):
     query: str
     history: Optional[List[ChatMessage]] = []
+    context: Optional[dict] = {}
 
 class ChatResponse(BaseModel):
     answer: str
     sources: List[dict]
+
+@app.get("/h1b/summary")
+def h1b_summary(top: int = 10):
+    if top < 1:
+        top = 1
+    if top > 50:
+        top = 50
+    return data_loader.data_loader.get_summary(top_n=top)
+
+@app.get("/h1b/search")
+def h1b_search(q: str = "", limit: int = 20):
+    if limit < 1:
+        limit = 1
+    if limit > 50:
+        limit = 50
+    return {"results": data_loader.data_loader.search_employers_with_ids(q, limit=limit)}
+
+@app.get("/h1b/employer")
+def h1b_employer(id: int):
+    emp = data_loader.data_loader.get_employer_by_id(id)
+    if not emp:
+        raise HTTPException(status_code=404, detail="Employer not found")
+    return emp
 
 try:
     INDEX_DIR = rag_core.initialize_corpus()
@@ -51,9 +82,26 @@ def chat_endpoint(req: ChatRequest):
     if not api_key:
         raise HTTPException(status_code=500, detail="GROQ_API_KEY not configured on server")
 
-    # Convert Pydantic models to dicts for rag_core
+    h1b_context = data_loader.data_loader.get_context_for_query(req.query)
+    
+    external_context = data_loader.data_loader.fetch_external_context(req.context or {})
+
     history_dicts = [{"role": m.role, "content": m.content} for m in req.history]
     
+    if req.context or h1b_context or external_context:
+        context_str = "CURRENT USER CONTEXT:\n"
+        if req.context:
+            for k, v in req.context.items():
+                context_str += f"{k}: {v}\n"
+        
+        if h1b_context:
+            context_str += "\nRELAVENT H1B DATA:\n" + h1b_context
+            
+        if external_context:
+            context_str += "\nEXTERNAL LIVE DATA:\n" + external_context
+
+        history_dicts.append({"role": "system", "content": context_str})
+
     answer, hits = rag_core.generate_answer(api_key, INDEX_DIR, req.query, history_dicts)
     
     sources = []

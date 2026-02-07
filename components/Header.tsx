@@ -4,12 +4,20 @@ import { QuantroLogo } from './icons/QuantroLogo';
 import { NavIcons } from './NavIcons';
 import { useUser } from './UserContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { MegaTab, TabOption } from '../types';
 
-export const Header: React.FC = () => {
+interface HeaderProps {
+  activeMegaTab: MegaTab;
+  activeTab: TabOption;
+  onMegaTabChange: (tab: MegaTab) => void;
+  onUserClick: () => void;
+}
+
+export const Header: React.FC<HeaderProps> = ({ activeMegaTab, activeTab, onMegaTabChange, onUserClick }) => {
   const { user, logout } = useUser();
   const [showDropdown, setShowDropdown] = useState(false);
 
-  const displayName = user ? `${user.firstName} ${user.lastName}` : 'Guest';
+  const displayName = user ? `\${user.firstName} \${user.lastName}` : 'Guest';
   const displayRole = user?.visaStatus || 'User';
 
   return (
@@ -19,7 +27,12 @@ export const Header: React.FC = () => {
         <span className="font-semibold text-lg tracking-tight">Immigration</span>
       </div>
 
-      <NavIcons />
+      <NavIcons
+        activeMegaTab={activeMegaTab}
+        activeTab={activeTab}
+        onMegaTabChange={onMegaTabChange}
+        onUserClick={onUserClick}
+      />
 
       <div className="flex items-center gap-4">
         <div className="relative group">
