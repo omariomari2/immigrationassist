@@ -114,9 +114,19 @@ function AppContent() {
               </>
             )}
 
-            {activeMegaTab === MegaTab.SourceOfTruth && <SourceOfTruth />}
+            {activeMegaTab === MegaTab.SourceOfTruth && <SourceOfTruth
+              activeMegaTab={activeMegaTab}
+              activeTab={activeTab}
+              onMegaTabChange={handleMegaTabChange}
+              onUserClick={handleUserClick}
+            />}
 
-            {activeMegaTab === MegaTab.Resources && <Resources />}
+            {activeMegaTab === MegaTab.Resources && <Resources
+              activeMegaTab={activeMegaTab}
+              activeTab={activeTab}
+              onMegaTabChange={handleMegaTabChange}
+              onUserClick={handleUserClick}
+            />}
           </main>
         </div>
       </div>

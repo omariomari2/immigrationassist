@@ -10,7 +10,17 @@ interface ResourceLink {
     icon: React.ReactNode;
 }
 
-export const Resources: React.FC = () => {
+import { MegaTab, TabOption } from '../../types';
+import { PageHeader } from '../PageHeader';
+
+interface ResourcesProps {
+    activeMegaTab: MegaTab;
+    activeTab: TabOption;
+    onMegaTabChange: (tab: MegaTab) => void;
+    onUserClick: () => void;
+}
+
+export const Resources: React.FC<ResourcesProps> = ({ activeMegaTab, activeTab, onMegaTabChange, onUserClick }) => {
     const resources: ResourceLink[] = [
         {
             id: '1',
@@ -57,9 +67,10 @@ export const Resources: React.FC = () => {
     return (
         <div className="flex flex-col gap-6 mb-8">
             {/* Header Section */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div className="flex items-baseline gap-3">
-                    <h1 className="text-2xl font-medium text-textPrimary">Resources</h1>
+            {/* Header Section */}
+            <PageHeader
+                title="Resources"
+                breadcrumbs={
                     <div className="flex items-center gap-2 text-xs text-textTertiary">
                         <span className="w-2 h-2 bg-gray-300 rounded-sm"></span>
                         <span>External Links</span>
@@ -67,8 +78,12 @@ export const Resources: React.FC = () => {
                         <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
                         <span className="font-medium text-gray-500">Verified</span>
                     </div>
-                </div>
-            </div>
+                }
+                activeMegaTab={activeMegaTab}
+                activeTab={activeTab}
+                onMegaTabChange={onMegaTabChange}
+                onUserClick={onUserClick}
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {resources.map((resource) => (

@@ -2,6 +2,7 @@ import React from 'react';
 import { MegaTab, TabOption } from '../types';
 import { Calendar, RefreshCw, ChevronDown } from 'lucide-react';
 import { NavIcons } from './NavIcons';
+import { PageHeader } from './PageHeader';
 
 interface ControlsProps {
   activeTab: TabOption;
@@ -13,9 +14,9 @@ interface ControlsProps {
 export const Controls: React.FC<ControlsProps> = ({ activeMegaTab, activeTab, onMegaTabChange, onUserClick }) => {
   return (
     <div className="flex flex-col gap-6 mb-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex items-baseline gap-3">
-          <h1 className="text-2xl font-medium text-textPrimary">Overview</h1>
+      <PageHeader
+        title="Overview"
+        breadcrumbs={
           <div className="flex items-center gap-2 text-xs text-textTertiary">
             <span className="w-2 h-2 bg-gray-300 rounded-sm"></span>
             <span>Immigration hub</span>
@@ -23,15 +24,12 @@ export const Controls: React.FC<ControlsProps> = ({ activeMegaTab, activeTab, on
             <span className="w-2 h-2 bg-gray-400 rounded-full opacity-50"></span>
             <span className="font-medium text-gray-500">Traffic</span>
           </div>
-        </div>
-
-        <NavIcons
-          activeMegaTab={activeMegaTab}
-          activeTab={activeTab}
-          onMegaTabChange={onMegaTabChange}
-          onUserClick={onUserClick}
-        />
-      </div>
+        }
+        activeMegaTab={activeMegaTab}
+        activeTab={activeTab}
+        onMegaTabChange={onMegaTabChange}
+        onUserClick={onUserClick}
+      />
     </div>
   );
 };

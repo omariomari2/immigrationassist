@@ -9,7 +9,17 @@ interface SourceFile {
     size: string;
 }
 
-export const SourceOfTruth: React.FC = () => {
+import { MegaTab, TabOption } from '../../types';
+import { PageHeader } from '../PageHeader';
+
+interface SourceOfTruthProps {
+    activeMegaTab: MegaTab;
+    activeTab: TabOption;
+    onMegaTabChange: (tab: MegaTab) => void;
+    onUserClick: () => void;
+}
+
+export const SourceOfTruth: React.FC<SourceOfTruthProps> = ({ activeMegaTab, activeTab, onMegaTabChange, onUserClick }) => {
     const [files, setFiles] = useState<SourceFile[]>([
         { id: '1', name: 'USCIS_Policy_Manual_2024.pdf', type: 'PDF', date: '2024-01-15', size: '2.4 MB' },
         { id: '2', name: 'H1B_FY2025_Guidelines.pdf', type: 'PDF', date: '2024-02-01', size: '1.8 MB' },
@@ -40,9 +50,10 @@ export const SourceOfTruth: React.FC = () => {
     return (
         <div className="flex flex-col gap-6 mb-8">
             {/* Header Section matching Controls.tsx style */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div className="flex items-baseline gap-3">
-                    <h1 className="text-2xl font-medium text-textPrimary">Source of Truth</h1>
+            {/* Header Section matching Controls.tsx style */}
+            <PageHeader
+                title="Source of Truth"
+                breadcrumbs={
                     <div className="flex items-center gap-2 text-xs text-textTertiary">
                         <span className="w-2 h-2 bg-gray-300 rounded-sm"></span>
                         <span>Knowledge Base</span>
@@ -50,8 +61,12 @@ export const SourceOfTruth: React.FC = () => {
                         <span className="w-2 h-2 bg-green-400 rounded-full"></span>
                         <span className="font-medium text-gray-500">Active</span>
                     </div>
-                </div>
-            </div>
+                }
+                activeMegaTab={activeMegaTab}
+                activeTab={activeTab}
+                onMegaTabChange={onMegaTabChange}
+                onUserClick={onUserClick}
+            />
 
             {/* Main Content Area */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
