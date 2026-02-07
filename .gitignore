@@ -26,3 +26,6 @@ dist-ssr
 .env
 .env.*
 start-all.ps1
+.groq_key
+corpus/
+index/

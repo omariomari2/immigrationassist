@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+requests
+beautifulsoup4
+pypdf
+rank_bm25
+
+groq
+urllib3

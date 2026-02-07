@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Header } from './components/Header';
+import { Chatbot } from './components/Chatbot';
 import { Controls, KPIHeader } from './components/Controls';
 import { GlobalEntry } from './components/global-entry/GlobalEntry';
 import { OpsStatus } from './components/ops-status/OpsStatus';
@@ -78,6 +79,7 @@ function AppContent() {
           </main>
         </div>
       </div>
+      <Chatbot />
     </div>
   );
 }
