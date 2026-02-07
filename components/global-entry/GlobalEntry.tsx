@@ -152,6 +152,7 @@ export const GlobalEntry = ({ onNavigateToOpsStatus }: { onNavigateToOpsStatus?:
     };
 
     const handleStart = (locationId: string, startDate: string, endDate: string) => {
+        console.log('[GlobalEntry] Starting monitoring', { locationId, startDate, endDate });
         const selectedLocation = locations.find((location) => location.id.toString() === locationId);
         const params = { locationId, startDate, endDate };
         setMonitorParams(params);
@@ -172,6 +173,7 @@ export const GlobalEntry = ({ onNavigateToOpsStatus }: { onNavigateToOpsStatus?:
     };
 
     const handleStop = () => {
+        console.log('[GlobalEntry] Stopping monitoring');
         setIsRunning(false);
         setSlots([]); // Clear slots when stopped
         hasResyncedExtensionRef.current = false;

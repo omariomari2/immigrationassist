@@ -9,7 +9,13 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5500",
+        "http://127.0.0.1:5500",
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://localhost:4000"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -34,7 +40,7 @@ except Exception as e:
     INDEX_DIR = "index"
 
 @app.post("/chat", response_model=ChatResponse)
-async def chat_endpoint(req: ChatRequest):
+def chat_endpoint(req: ChatRequest):
     api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
         key_file = ".groq_key"
@@ -45,7 +51,10 @@ async def chat_endpoint(req: ChatRequest):
     if not api_key:
         raise HTTPException(status_code=500, detail="GROQ_API_KEY not configured on server")
 
-    answer, hits = rag_core.generate_answer(api_key, INDEX_DIR, req.query, req.history)
+    # Convert Pydantic models to dicts for rag_core
+    history_dicts = [{"role": m.role, "content": m.content} for m in req.history]
+    
+    answer, hits = rag_core.generate_answer(api_key, INDEX_DIR, req.query, history_dicts)
     
     sources = []
     for h in hits:

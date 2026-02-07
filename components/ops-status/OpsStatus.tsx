@@ -304,9 +304,20 @@ export function OpsStatus({ onNavigateToGlobalEntry }: { onNavigateToGlobalEntry
             }));
 
             if (updated) {
+                // Safety check: if we are constantly updating, we might be in a loop.
+                // For now, valid updates are fine, but ensure we don't trigger if nothing changed.
+                console.log('[OpsStatus] Saving updated recents with coordinates');
                 saveRecents(updatedRecents);
             } else if (locationRecents.length !== recents.length) {
-                saveRecents(updatedRecents);
+                // GUARD: Only save if we actually have a meaningful difference to avoid cycles
+                // If we filtered out items but otherwise they are the same, strictly check IDs
+                const currentIds = locationRecents.map(r => r.id).join(',');
+                const savedIds = getRecents().map(r => r.id).join(','); // Re-read fresh
+
+                if (currentIds !== savedIds) {
+                    console.log('[OpsStatus] Pruning invalid recents');
+                    saveRecents(updatedRecents);
+                }
             }
 
             setRecentResources(resources);

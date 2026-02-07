@@ -5,6 +5,18 @@ let inFlight: Promise<EmployerDataFile> | null = null;
 
 export const globalAverageApprovalRate = 95.0; // Hardcoded or calculated
 
+// Optimization: Freeze large dataset to bypass React's reactivity overhead
+function deepFreeze(object: any) {
+    const propNames = Object.getOwnPropertyNames(object);
+    for (const name of propNames) {
+        const value = object[name];
+        if (value && typeof value === "object") {
+            deepFreeze(value);
+        }
+    }
+    return Object.freeze(object);
+}
+
 export async function loadEmployerData(): Promise<EmployerDataFile> {
     if (cachedEmployerData) return cachedEmployerData;
     if (inFlight) return inFlight;
@@ -15,6 +27,10 @@ export async function loadEmployerData(): Promise<EmployerDataFile> {
                 throw new Error(`Failed to load employer data: ${response.status}`);
             }
             const data = await response.json();
+
+            // FREEZE DATA: detailed optimization to prevent React from proxifying 45MB of data
+            deepFreeze(data);
+
             cachedEmployerData = data as EmployerDataFile;
             return cachedEmployerData;
         })

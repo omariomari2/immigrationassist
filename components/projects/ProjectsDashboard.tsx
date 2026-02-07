@@ -21,15 +21,18 @@ export function ProjectsDashboard() {
 
     useEffect(() => {
         let isActive = true;
+        console.log('[ProjectsDashboard] Mounting, fetching data...');
 
         loadEmployerData()
             .then((data) => {
                 if (!isActive) return;
+                console.log('[ProjectsDashboard] Data loaded, freezing complete.');
                 setEmployerData(data);
                 setSelectedEmployer(data.employers[0] || null);
             })
             .catch((err) => {
                 if (!isActive) return;
+                console.error('[ProjectsDashboard] Data load error', err);
                 setError(err instanceof Error ? err.message : 'Failed to load employer data.');
             })
             .finally(() => {

@@ -69,6 +69,7 @@ export const Chatbot: React.FC = () => {
                 sources: data.sources
             }]);
         } catch (error) {
+            console.error('Chatbot error:', error);
             setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I encountered an error connecting to the knowledge base.' }]);
         } finally {
             setIsLoading(false);
@@ -117,7 +118,7 @@ export const Chatbot: React.FC = () => {
                                         ? 'bg-black text-white rounded-tr-none'
                                         : 'bg-white text-gray-800 border border-gray-100 shadow-sm rounded-tl-none'
                                         }`}>
-                                        <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                                        <p className="whitespace-pre-wrap leading-relaxed break-words overflow-hidden">{msg.content}</p>
                                         {msg.sources && msg.sources.length > 0 && (
                                             <div className="mt-3 pt-2 border-t border-gray-100">
                                                 <p className="text-[10px] uppercase font-bold text-gray-400 mb-1">Sources</p>
