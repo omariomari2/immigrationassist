@@ -8,12 +8,19 @@ const DEFAULT_PROFILE: UserProfile = {
 
 export function NewsProject() {
     return (
-        <div className="px-6 py-8 max-w-3xl mx-auto">
-            <div className="space-y-6">
-                <div className="flex flex-col md:flex-row md:justify-between md:items-baseline border-b-4 border-black pb-4">
-                    <h1 className="text-3xl md:text-4xl font-black tracking-tighter">IMMIGRANT NEWS</h1>
-                    <span className="mt-2 md:mt-0 font-mono text-xs md:text-sm font-bold bg-black text-white px-2 py-1 uppercase">
-                        {DEFAULT_PROFILE.visaType}
+        <div className="p-6">
+            <div className="flex flex-col gap-6">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                    <div>
+                        <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+                            Immigration Updates
+                        </h3>
+                        <h2 className="text-xl font-semibold text-gray-800">
+                            News Feed
+                        </h2>
+                    </div>
+                    <span className="text-xs font-medium bg-gray-800 text-white px-3 py-1.5 rounded-lg">
+                        {DEFAULT_PROFILE.visaType} Visa
                     </span>
                 </div>
 

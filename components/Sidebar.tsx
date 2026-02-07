@@ -64,7 +64,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {/* Logo */}
             <div className="flex items-center gap-2.5 px-3 mb-8">
                 <QuantroLogo className="text-textPrimary w-7 h-7" />
-                <span className="font-semibold text-lg tracking-tight text-textPrimary">Quantro</span>
+                <span className="font-semibold text-lg tracking-tight text-textPrimary">Immigration</span>
             </div>
 
             {/* Main Navigation */}

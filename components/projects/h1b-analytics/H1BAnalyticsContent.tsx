@@ -2,6 +2,7 @@ import { ExternalLink } from 'lucide-react';
 import { H1BStatsChart } from './H1BStatsChart';
 import { TrendChart } from './TrendChart';
 import { OpportunitiesPanel } from './OpportunitiesPanel';
+import { CompanyNewsPanel } from './CompanyNewsPanel';
 import { EmployerData, EmployerDataFile } from './types';
 
 interface H1BAnalyticsContentProps {
@@ -22,14 +23,11 @@ export function H1BAnalyticsContent({ employerData, selectedEmployer }: H1BAnaly
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="lg:col-span-6 space-y-6">
                 <H1BStatsChart employer={selectedEmployer} />
-            </div>
 
-            <div className="lg:col-span-3 space-y-6">
-                <TrendChart employer={selectedEmployer} />
-            </div>
-
-            <div className="lg:col-span-3 space-y-6">
-                <OpportunitiesPanel employer={selectedEmployer} />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <TrendChart employer={selectedEmployer} />
+                    <CompanyNewsPanel employerName={selectedEmployer.name} />
+                </div>
 
                 <p className="text-xs text-gray-400 leading-relaxed">
                     <span className="font-semibold uppercase tracking-wider text-[10px] text-gray-400 block mb-1">
@@ -51,6 +49,11 @@ export function H1BAnalyticsContent({ employerData, selectedEmployer }: H1BAnaly
                     </a>
                 </div>
             </div>
+
+            <div className="lg:col-span-6 space-y-6">
+                <OpportunitiesPanel employer={selectedEmployer} />
+            </div>
         </div>
     );
 }
+

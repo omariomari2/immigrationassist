@@ -220,14 +220,112 @@ async function handleNewsRequest(req: IncomingMessage, res: ServerResponse, apiK
   }
 }
 
+const companyNewsCache = new Map<string, CachedResponse>();
+const companyNewsInFlight = new Map<string, Promise<{ articles: any[] }>>();
+
+async function fetchCompanyNews(company: string, apiKey: string): Promise<SimpleItem[]> {
+  const searchQuery = `"${company}" H1B visa hiring jobs`;
+  const serpUrl = new URL("https://serpapi.com/search.json");
+  serpUrl.searchParams.set("engine", "google_news");
+  serpUrl.searchParams.set("q", searchQuery);
+  serpUrl.searchParams.set("gl", "us");
+  serpUrl.searchParams.set("hl", "en");
+  serpUrl.searchParams.set("api_key", apiKey);
+
+  const newsRes = await fetch(serpUrl.toString());
+
+  if (!newsRes.ok) {
+    return [];
+  }
+
+  const data = await newsRes.json();
+  const newsResults = data.news_results || [];
+
+  return newsResults
+    .map((item: any) => ({
+      title: item?.title,
+      url: item?.link,
+    }))
+    .filter((item: SimpleItem) => item.title && item.url)
+    .slice(0, 8);
+}
+
+async function handleCompanyNewsRequest(req: IncomingMessage, res: ServerResponse, apiKey?: string) {
+  if (req.method !== "POST") {
+    return sendJson(res, 405, { error: "Method Not Allowed" });
+  }
+
+  if (!apiKey) {
+    return sendJson(res, 500, { error: "Server misconfiguration: Missing SERPAPI_KEY" });
+  }
+
+  let body: any;
+  try {
+    body = await readJson(req);
+  } catch (error) {
+    return sendJson(res, 400, { error: "Invalid JSON body" });
+  }
+
+  const company = body?.company;
+  if (!company || typeof company !== "string") {
+    return sendJson(res, 400, { error: "Missing company parameter" });
+  }
+
+  const forceRefresh = body?.forceRefresh === true;
+  const cacheKey = company.toLowerCase().trim();
+
+  if (!forceRefresh) {
+    const cached = companyNewsCache.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now()) {
+      return sendJson(res, 200, { articles: cached.articles });
+    }
+
+    const existing = companyNewsInFlight.get(cacheKey);
+    if (existing) {
+      const result = await existing;
+      return sendJson(res, 200, result);
+    }
+  }
+
+  const work = (async () => {
+    const items = await fetchCompanyNews(company, apiKey);
+    const articles = items.map((item, i) => ({
+      title: item.title,
+      url: item.url,
+      priority: i < 2 ? "HIGH" : i < 5 ? "MEDIUM" : "LOW",
+    }));
+    return { articles };
+  })();
+
+  companyNewsInFlight.set(cacheKey, work);
+
+  try {
+    const result = await work;
+    companyNewsCache.set(cacheKey, {
+      expiresAt: Date.now() + CACHE_TTL_MS,
+      articles: result.articles,
+    });
+    return sendJson(res, 200, result);
+  } finally {
+    companyNewsInFlight.delete(cacheKey);
+  }
+}
+
 function newsApiPlugin(apiKey?: string) {
   return {
     name: "news-api",
     configureServer(server: any) {
       server.middlewares.use((req: IncomingMessage, res: ServerResponse, next: () => void) => {
+        if (req.url?.startsWith("/api/company-news")) {
+          handleCompanyNewsRequest(req, res, apiKey).catch((error) => {
+            if (!res.headersSent) {
+              sendJson(res, 500, { error: "Internal Server Error" });
+            }
+          });
+          return;
+        }
         if (!req.url?.startsWith("/api/news")) return next();
         handleNewsRequest(req, res, apiKey).catch((error) => {
-          console.error("News API error:", error);
           if (!res.headersSent) {
             sendJson(res, 500, { error: "Internal Server Error" });
           }
@@ -236,9 +334,16 @@ function newsApiPlugin(apiKey?: string) {
     },
     configurePreviewServer(server: any) {
       server.middlewares.use((req: IncomingMessage, res: ServerResponse, next: () => void) => {
+        if (req.url?.startsWith("/api/company-news")) {
+          handleCompanyNewsRequest(req, res, apiKey).catch((error) => {
+            if (!res.headersSent) {
+              sendJson(res, 500, { error: "Internal Server Error" });
+            }
+          });
+          return;
+        }
         if (!req.url?.startsWith("/api/news")) return next();
         handleNewsRequest(req, res, apiKey).catch((error) => {
-          console.error("News API error:", error);
           if (!res.headersSent) {
             sendJson(res, 500, { error: "Internal Server Error" });
           }
@@ -249,22 +354,22 @@ function newsApiPlugin(apiKey?: string) {
 }
 
 export default defineConfig(({ mode }) => {
-    const env = loadEnv(mode, '.', '');
-    const serpApiKey = env.SERPAPI_KEY || env.VITE_SERPAPI_KEY;
-    return {
-      server: {
-        port: 5500,
-        host: '0.0.0.0',
-      },
-      plugins: [react(), newsApiPlugin(serpApiKey)],
-      define: {
-        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
-      },
-      resolve: {
-        alias: {
-          '@': path.resolve(__dirname, '.'),
-        }
+  const env = loadEnv(mode, '.', '');
+  const serpApiKey = env.SERPAPI_KEY || env.VITE_SERPAPI_KEY;
+  return {
+    server: {
+      port: 5500,
+      host: '0.0.0.0',
+    },
+    plugins: [react(), newsApiPlugin(serpApiKey)],
+    define: {
+      'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+    },
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, '.'),
       }
-    };
+    }
+  };
 });

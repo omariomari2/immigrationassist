@@ -11,7 +11,7 @@ export const Header: React.FC = () => {
       {/* Logo */}
       <div className="flex items-center gap-2">
         <QuantroLogo className="text-textPrimary w-6 h-6" />
-        <span className="font-semibold text-lg tracking-tight">Quantro</span>
+        <span className="font-semibold text-lg tracking-tight">Immigration</span>
       </div>
 
       {/* Nav Icons Group */}

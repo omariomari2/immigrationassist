@@ -83,8 +83,12 @@ export function ProjectsDashboard() {
                         selectedEmployer={selectedEmployer}
                     />
                 ) : (
-                    <div className="bg-white rounded-3xl shadow-soft overflow-hidden min-h-[80vh]">
-                        <NewsProject />
+                    <div className="w-full lg:w-1/2">
+                        <div className="bg-white rounded-3xl shadow-soft overflow-hidden h-[70vh]">
+                            <div className="h-full overflow-y-auto">
+                                <NewsProject />
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>

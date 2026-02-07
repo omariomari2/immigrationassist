@@ -37,7 +37,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({ employer }) => {
     const avgRate = data.reduce((sum, d) => sum + d.rate, 0) / data.length;
 
     return (
-        <div className="w-full bg-white p-6 pb-2 rounded-3xl shadow-soft relative overflow-hidden">
+        <div className="w-full h-[280px] bg-white p-6 pb-2 rounded-3xl shadow-soft relative overflow-hidden">
             <div className="absolute top-6 left-6 right-6 flex justify-between items-start z-20">
                 <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
                     Historical Approval Rates
