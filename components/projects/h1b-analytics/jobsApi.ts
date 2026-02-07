@@ -6,10 +6,13 @@ interface SimplifyJobListing {
     locations: string[];
     url: string;
     date_posted: number;
+    date_updated: number;
     active: boolean;
     is_visible: boolean;
     sponsorship: string;
 }
+
+const MAX_JOB_AGE_DAYS = 60;
 
 export interface JobOpportunity {
     role: string;
@@ -75,9 +78,18 @@ export async function fetchJobListings(): Promise<SimplifyJobListing[]> {
 
 export async function getOpportunitiesForCompany(companyName: string): Promise<JobOpportunity[]> {
     const listings = await fetchJobListings();
+    const now = Date.now();
+    const maxAgeMs = MAX_JOB_AGE_DAYS * 24 * 60 * 60 * 1000;
 
     const matchingListings = listings
-        .filter(listing => (listing.active || listing.is_visible) && fuzzyMatch(companyName, listing.company_name))
+        .filter(listing => {
+            const isActive = listing.active || listing.is_visible;
+            const matchesCompany = fuzzyMatch(companyName, listing.company_name);
+            const postedAt = listing.date_posted * 1000;
+            const isRecent = (now - postedAt) < maxAgeMs;
+            return isActive && matchesCompany && isRecent;
+        })
+        .sort((a, b) => b.date_updated - a.date_updated)
         .slice(0, 10);
 
     return matchingListings.map(listing => ({
