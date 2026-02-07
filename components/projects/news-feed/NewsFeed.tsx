@@ -5,9 +5,10 @@ import { fetchNews } from "./news-service";
 
 interface NewsFeedProps {
     profile: UserProfile;
+    companyName?: string;
 }
 
-export function NewsFeed({ profile }: NewsFeedProps) {
+export function NewsFeed({ profile, companyName }: NewsFeedProps) {
     const [news, setNews] = useState<NewsItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -18,7 +19,7 @@ export function NewsFeed({ profile }: NewsFeedProps) {
             setLoading(true);
             setError(null);
             try {
-                const data = await fetchNews(profile);
+                const data = await fetchNews(profile, companyName);
                 setNews(data);
             } catch (err) {
                 setNews([]);
@@ -28,7 +29,7 @@ export function NewsFeed({ profile }: NewsFeedProps) {
             }
         }
         load();
-    }, [profile]);
+    }, [profile, companyName]);
 
     const displayedNews =
         filter === "RELEVANT"

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { H1BAnalyticsContent } from './h1b-analytics/H1BAnalyticsContent';
-import { NewsProject } from './news-feed/NewsProject';
 import { ProjectSelector } from './ProjectSelector';
 import { H1BKPIHeader } from './h1b-analytics/H1BKPIHeader';
 import { H1BSearchHeader } from './h1b-analytics/H1BSearchHeader';
@@ -56,10 +55,6 @@ export function ProjectsDashboard() {
 
     useEffect(() => {
         let isActive = true;
-        if (activeProject !== ProjectOption.H1B) return () => {
-            isActive = false;
-        };
-
         setApiOnline(null);
         checkH1bApiHealth()
             .then((ok) => {
@@ -74,7 +69,7 @@ export function ProjectsDashboard() {
         return () => {
             isActive = false;
         };
-    }, [activeProject]);
+    }, []);
 
     if (isLoading) {
         return (
@@ -104,7 +99,7 @@ export function ProjectsDashboard() {
 
     return (
         <div className="flex flex-col gap-6">
-            {activeProject === ProjectOption.H1B && apiOnline === false && (
+            {apiOnline === false && (
                 <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-xs text-red-700 shadow-soft">
                     H1B API is offline. Start the chatbot server on port <span className="font-semibold">8001</span> and refresh.
                 </div>
@@ -117,30 +112,19 @@ export function ProjectsDashboard() {
                         onProjectChange={setActiveProject}
                     />
                 </div>
-                {activeProject === ProjectOption.H1B && (
-                    <H1BSearchHeader
-                        summary={summary}
-                        selectedEmployer={selectedEmployer}
-                        onSelect={handleSelectEmployer}
-                    />
-                )}
+                <H1BSearchHeader
+                    summary={summary}
+                    selectedEmployer={selectedEmployer}
+                    onSelect={handleSelectEmployer}
+                />
             </div>
 
             <div className="transition-all duration-500 ease-in-out">
-                {activeProject === ProjectOption.H1B ? (
-                    <H1BAnalyticsContent
-                        summary={summary}
-                        selectedEmployer={selectedEmployer}
-                    />
-                ) : (
-                    <div className="w-full lg:w-1/2">
-                        <div className="bg-white rounded-3xl shadow-soft overflow-hidden h-[70vh]">
-                            <div className="h-full overflow-y-auto">
-                                <NewsProject />
-                            </div>
-                        </div>
-                    </div>
-                )}
+                <H1BAnalyticsContent
+                    summary={summary}
+                    selectedEmployer={selectedEmployer}
+                    showNews={activeProject === ProjectOption.News}
+                />
             </div>
         </div>
     );

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Bell, ChevronDown, LogOut, User } from 'lucide-react';
 import { QuantroLogo } from './icons/QuantroLogo';
-import { NavIcons } from './NavIcons';
 import { useUser } from './UserContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MegaTab, TabOption } from '../types';
@@ -10,10 +9,11 @@ interface HeaderProps {
   activeMegaTab: MegaTab;
   activeTab: TabOption;
   onMegaTabChange: (tab: MegaTab) => void;
+  onTabChange: (tab: TabOption) => void;
   onUserClick: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ activeMegaTab, activeTab, onMegaTabChange, onUserClick }) => {
+export const Header: React.FC<HeaderProps> = ({ activeMegaTab, activeTab, onMegaTabChange, onTabChange, onUserClick }) => {
   const { user, logout } = useUser();
   const [showDropdown, setShowDropdown] = useState(false);
 
@@ -27,12 +27,29 @@ export const Header: React.FC<HeaderProps> = ({ activeMegaTab, activeTab, onMega
         <span className="font-semibold text-lg tracking-tight">Immigration</span>
       </div>
 
-      <NavIcons
-        activeMegaTab={activeMegaTab}
-        activeTab={activeTab}
-        onMegaTabChange={onMegaTabChange}
-        onUserClick={onUserClick}
-      />
+      <div className="flex bg-white p-1 rounded-xl shadow-sm">
+        {Object.values(TabOption)
+          .filter(tab => tab !== TabOption.Users)
+          .map((tab) => (
+            <button
+              key={tab}
+              onClick={() => onTabChange(tab)}
+              className="relative px-5 py-1.5 text-sm font-medium rounded-lg transition-colors z-10"
+            >
+              {activeTab === tab && (
+                <motion.div
+                  layoutId="activeTab"
+                  className="absolute inset-0 bg-black rounded-lg"
+                  initial={false}
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                />
+              )}
+              <span className={`relative z-20 ${activeTab === tab ? 'text-white' : 'text-gray-500 hover:text-gray-700'}`}>
+                {tab}
+              </span>
+            </button>
+          ))}
+      </div>
 
       <div className="flex items-center gap-4">
         <div className="relative group">

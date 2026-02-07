@@ -2,7 +2,7 @@ import { useUser } from "../../UserContext";
 import { NewsFeed } from "./NewsFeed";
 import { UserProfile } from "./types";
 
-export function NewsProject() {
+export function NewsProject({ companyName }: { companyName?: string }) {
     const { user } = useUser();
 
     // Default to F-1 if no visa status is set
@@ -30,7 +30,7 @@ export function NewsProject() {
                     </span>
                 </div>
 
-                <NewsFeed profile={profile} />
+                <NewsFeed profile={profile} companyName={companyName} />
             </div>
         </div>
     );

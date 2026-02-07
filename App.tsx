@@ -97,13 +97,19 @@ function AppContent() {
             activeMegaTab={activeMegaTab}
             activeTab={activeTab}
             onMegaTabChange={handleMegaTabChange}
+            onTabChange={setActiveTab}
             onUserClick={handleUserClick}
           />
 
           <main className="mt-8 px-2 sm:px-4">
             {activeMegaTab === MegaTab.Dashboard && (
               <>
-                <Controls activeTab={activeTab} onTabChange={setActiveTab} />
+                <Controls
+                  activeTab={activeTab}
+                  activeMegaTab={activeMegaTab}
+                  onMegaTabChange={handleMegaTabChange}
+                  onUserClick={handleUserClick}
+                />
                 {renderDashboardContent()}
               </>
             )}

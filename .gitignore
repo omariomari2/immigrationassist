@@ -29,3 +29,7 @@ start-all.ps1
 .groq_key
 corpus/
 index/
+
+# Ignore all markdown files except README.md
+*.md
+!README.md

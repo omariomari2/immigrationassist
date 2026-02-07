@@ -3,14 +3,16 @@ import { H1BStatsChart } from './H1BStatsChart';
 import { TrendChart } from './TrendChart';
 import { OpportunitiesPanel } from './OpportunitiesPanel';
 import { CompanyNewsPanel } from './CompanyNewsPanel';
+import { NewsProject } from '../news-feed/NewsProject';
 import { EmployerData, EmployerSummaryResponse } from './types';
 
 interface H1BAnalyticsContentProps {
     summary: EmployerSummaryResponse;
     selectedEmployer: EmployerData | null;
+    showNews?: boolean;
 }
 
-export function H1BAnalyticsContent({ summary, selectedEmployer }: H1BAnalyticsContentProps) {
+export function H1BAnalyticsContent({ summary, selectedEmployer, showNews = false }: H1BAnalyticsContentProps) {
     if (!selectedEmployer) {
         return (
             <div className="bg-white rounded-3xl shadow-soft p-8 text-sm text-gray-500">
@@ -51,7 +53,15 @@ export function H1BAnalyticsContent({ summary, selectedEmployer }: H1BAnalyticsC
             </div>
 
             <div className="lg:col-span-6 space-y-6">
-                <OpportunitiesPanel employer={selectedEmployer} />
+                {showNews ? (
+                    <div className="bg-white rounded-3xl shadow-soft overflow-hidden h-[600px]">
+                        <div className="h-full overflow-y-auto">
+                            <NewsProject companyName={selectedEmployer.name} />
+                        </div>
+                    </div>
+                ) : (
+                    <OpportunitiesPanel employer={selectedEmployer} />
+                )}
             </div>
         </div>
     );
