@@ -17,7 +17,7 @@ export const Header: React.FC<HeaderProps> = ({ activeMegaTab, activeTab, onMega
   const { user, logout } = useUser();
   const [showDropdown, setShowDropdown] = useState(false);
 
-  const displayName = user ? `\${user.firstName} \${user.lastName}` : 'Guest';
+  const displayName = user ? `${user.firstName} ${user.lastName}` : 'Guest';
   const displayRole = user?.visaStatus || 'User';
 
   return (

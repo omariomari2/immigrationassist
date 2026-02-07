@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useUser } from './UserContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, X, Send, Bot, User, Loader2, FileText } from 'lucide-react';
+import { MessageCircle, X, Send, Bot, Loader2, FileText } from 'lucide-react';
 
 interface Source {
     title: string;
@@ -22,12 +22,35 @@ export const Chatbot: React.FC = () => {
     ]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [pendingQuery, setPendingQuery] = useState<string | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
+
+    useEffect(() => {
+        const handleOpenChat = (e: CustomEvent<{ query: string }>) => {
+            setIsOpen(true);
+            if (e.detail?.query) {
+                setPendingQuery(e.detail.query);
+            }
+        };
+
+        window.addEventListener('quantro_open_chat', handleOpenChat as EventListener);
+        return () => window.removeEventListener('quantro_open_chat', handleOpenChat as EventListener);
+    }, []);
+
+    useEffect(() => {
+        if (pendingQuery && isOpen && !isLoading) {
+            setInput(pendingQuery);
+            setPendingQuery(null);
+            setTimeout(() => {
+                handleSend(pendingQuery);
+            }, 100);
+        }
+    }, [pendingQuery, isOpen, isLoading]);
 
     useEffect(() => {
         scrollToBottom();
@@ -39,10 +62,11 @@ export const Chatbot: React.FC = () => {
         }
     }, [isOpen]);
 
-    const handleSend = async () => {
-        if (!input.trim() || isLoading) return;
+    const handleSend = async (manualQuery?: string) => {
+        const queryToSend = manualQuery || input;
+        if (!queryToSend.trim() || isLoading) return;
 
-        const userMsg = input.trim();
+        const userMsg = queryToSend.trim();
         setInput('');
         setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
         setIsLoading(true);
@@ -170,7 +194,7 @@ export const Chatbot: React.FC = () => {
                                     className="w-full bg-gray-50 text-sm border-0 rounded-xl px-4 py-3 pr-10 focus:ring-2 focus:ring-black/5 focus:bg-white transition-all placeholder:text-gray-400"
                                 />
                                 <button
-                                    onClick={handleSend}
+                                    onClick={() => handleSend()}
                                     disabled={!input.trim() || isLoading}
                                     className="absolute right-2 p-1.5 bg-black text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-transform"
                                 >

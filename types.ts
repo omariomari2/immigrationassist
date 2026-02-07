@@ -13,9 +13,9 @@ export interface ChartDataPoint {
 
 export enum TabOption {
   Users = 'Users',
-  GlobalEntry = 'Global Entry',
-  OpsStatus = 'Ops Status',
-  Projects = 'Projects'
+  GlobalEntry = 'Entry',
+  OpsStatus = 'Stay',
+  Projects = 'Extend'
 }
 
 export enum MegaTab {

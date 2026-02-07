@@ -42,6 +42,9 @@ export const TrendChart: React.FC<TrendChartProps> = ({ employer }) => {
                 <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
                     Historical Approval Rates
                 </h3>
+                <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-right">
+                    {employer.name}
+                </h3>
             </div>
 
             <div className="absolute top-12 left-6 text-[10px] text-gray-500 leading-tight z-10 transition-opacity duration-300">

@@ -47,10 +47,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
     const mainNavItems = [
         { icon: <IconPie />, label: 'Dashboard' },
-        { icon: <IconFolder />, label: 'Projects' },
+        { icon: <IconFolder />, label: 'Extend' },
         { icon: <IconFile />, label: 'Reports' },
         { icon: <IconUser />, label: 'Users' },
-        { icon: <IconShield />, label: 'Ops Status' },
+        { icon: <IconShield />, label: 'Stay' },
         { icon: <IconGrid />, label: 'Analytics' },
     ];
 

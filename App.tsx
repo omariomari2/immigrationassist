@@ -64,7 +64,7 @@ function AppContent() {
 
   const renderDashboardContent = () => {
     if (activeTab === TabOption.GlobalEntry) {
-      return <GlobalEntry onNavigateToOpsStatus={() => setActiveTab(TabOption.OpsStatus)} />;
+      return <GlobalEntry onNavigateToOpsStatus={() => setActiveTab(TabOption.OpsStatus)} onNavigateToProjects={() => setActiveTab(TabOption.Projects)} />;
     }
     if (activeTab === TabOption.OpsStatus) {
       return <OpsStatus onNavigateToGlobalEntry={() => setActiveTab(TabOption.GlobalEntry)} />;
@@ -84,8 +84,7 @@ function AppContent() {
     }
     return (
       <>
-        <KPIHeader />
-        <UserProfileCard />
+        <GlobalEntry onNavigateToOpsStatus={() => setActiveTab(TabOption.OpsStatus)} onNavigateToProjects={() => setActiveTab(TabOption.Projects)} showAccountInfo={true} />
       </>
     );
   };

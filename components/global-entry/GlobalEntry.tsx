@@ -8,8 +8,13 @@ import { fetchLocations, fetchSlots } from './api';
 import { Location, Slot, SlotResponse } from './types';
 import { sendExtensionMessage } from './extension-bridge';
 import { logRecent } from '../recents';
+import { AccountInfo } from './AccountInfo';
+import { RecentActivities } from '../profile/RecentActivities';
+import { AISuggestions } from '../profile/AISuggestions';
+import { RecentAIChats } from '../profile/RecentAIChats';
+import { ProfileTrendChart } from '../profile/ProfileTrendChart';
 
-export const GlobalEntry = ({ onNavigateToOpsStatus }: { onNavigateToOpsStatus?: () => void }) => {
+export const GlobalEntry = ({ onNavigateToOpsStatus, onNavigateToProjects, showAccountInfo = false }: { onNavigateToOpsStatus?: () => void; onNavigateToProjects?: () => void; showAccountInfo?: boolean }) => {
     const getInitialRunning = () => localStorage.getItem('ged_isRunning') === 'true';
     const getInitialSlots = () => {
         const savedRunning = localStorage.getItem('ged_isRunning') === 'true';
@@ -185,33 +190,63 @@ export const GlobalEntry = ({ onNavigateToOpsStatus }: { onNavigateToOpsStatus?:
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 <div className="lg:col-span-1 flex flex-col gap-6">
                     <MostRecentSlot mostRecentSlot={slots.length > 0 ? slots[0].timestamp : null} />
-                    <MonitorControl
-                        locations={locations}
-                        isRunning={isRunning}
-                        onStart={handleStart}
-                        onStop={handleStop}
-                        initialValues={monitorParams || undefined}
-                    />
+                    {showAccountInfo ? (
+                        <AccountInfo />
+                    ) : (
+                        <MonitorControl
+                            locations={locations}
+                            isRunning={isRunning}
+                            onStart={handleStart}
+                            onStop={handleStop}
+                            initialValues={monitorParams || undefined}
+                        />
+                    )}
                     <SystemStatus
                         isRunning={isRunning}
                         lastChecked={lastChecked}
                     />
                     <div className="flex-1 flex flex-col justify-end mt-auto">
-                        <ActionButtons onNavigateToOpsStatus={onNavigateToOpsStatus} />
+                        <ActionButtons
+                            onNavigateToOpsStatus={onNavigateToOpsStatus}
+                            onNavigateToProjects={onNavigateToProjects}
+                            isProfile={showAccountInfo}
+                        />
                     </div>
                 </div>
                 <div className="lg:col-span-3">
-                    <SlotsList
-                        slots={slots}
-                        loading={loading}
-                        lastChecked={lastChecked}
-                        locationId={monitorParams?.locationId}
-                        locationName={locations.find(l => l.id.toString() === monitorParams?.locationId)?.name}
-                        tzData={locations.find(l => l.id.toString() === monitorParams?.locationId)?.tzData}
-                    />
+                    {showAccountInfo ? (
+                        <div className="flex flex-col gap-6">
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="h-[550px]">
+                                    <RecentActivities />
+                                </div>
+                                <div className="flex flex-col gap-6">
+                                    <div className="h-[260px]">
+                                        <AISuggestions />
+                                    </div>
+                                    <div className="h-[260px]">
+                                        <RecentAIChats />
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="w-full">
+                                <ProfileTrendChart />
+                            </div>
+                        </div>
+                    ) : (
+                        <>
+                            <SlotsList
+                                slots={slots}
+                                loading={loading}
+                                lastChecked={lastChecked}
+                                locationId={monitorParams?.locationId}
+                                locationName={locations.find(l => l.id.toString() === monitorParams?.locationId)?.name}
+                                tzData={locations.find(l => l.id.toString() === monitorParams?.locationId)?.tzData}
+                            />
 
-                    {/* Availability Trend Chart */}
-                    <SlotsTrendChart slots={slots} />
+                            <SlotsTrendChart slots={slots} />
+                        </>
+                    )}
                 </div>
             </div>
         </div>
