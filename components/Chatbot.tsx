@@ -77,7 +77,7 @@ export const Chatbot: React.FC = () => {
                 content: m.content
             }));
 
-            const response = await fetch('http://localhost:8001/chat', {
+            const response = await fetch(`${import.meta.env.VITE_CHATBOT_API_URL || 'http://localhost:8001'}/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

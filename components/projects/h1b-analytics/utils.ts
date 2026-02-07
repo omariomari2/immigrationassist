@@ -1,6 +1,6 @@
 import type { EmployerData, EmployerSummary, EmployerSummaryResponse } from './types';
 
-export const API_BASE = 'http://localhost:8001';
+export const API_BASE = import.meta.env.VITE_CHATBOT_API_URL || 'http://localhost:8001';
 
 let cachedSummary: EmployerSummaryResponse | null = null;
 let summaryInFlight: Promise<EmployerSummaryResponse> | null = null;

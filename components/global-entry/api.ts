@@ -1,6 +1,6 @@
 import { Location, SlotResponse } from './types';
 
-const API_BASE = 'http://localhost:4000/api';
+const API_BASE = import.meta.env.VITE_GLOBAL_ENTRY_API_URL || 'http://localhost:4000/api';
 
 export async function fetchLocations(): Promise<Location[]> {
     try {

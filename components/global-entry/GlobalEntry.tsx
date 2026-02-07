@@ -158,7 +158,7 @@ export const GlobalEntry = ({ onNavigateToOpsStatus, onNavigateToProjects, showA
 
     const handleStart = (locationId: string, startDate: string, endDate: string) => {
         console.log('[GlobalEntry] Starting monitoring', { locationId, startDate, endDate });
-        const selectedLocation = locations.find((location) => location.id.toString() === locationId);
+        const selectedLocation = locations.find((location: Location) => location.id.toString() === locationId);
         const params = { locationId, startDate, endDate };
         setMonitorParams(params);
         setIsRunning(true);
@@ -240,8 +240,8 @@ export const GlobalEntry = ({ onNavigateToOpsStatus, onNavigateToProjects, showA
                                 loading={loading}
                                 lastChecked={lastChecked}
                                 locationId={monitorParams?.locationId}
-                                locationName={locations.find(l => l.id.toString() === monitorParams?.locationId)?.name}
-                                tzData={locations.find(l => l.id.toString() === monitorParams?.locationId)?.tzData}
+                                locationName={locations.find((l: Location) => l.id.toString() === monitorParams?.locationId)?.name}
+                                tzData={locations.find((l: Location) => l.id.toString() === monitorParams?.locationId)?.tzData}
                             />
 
                             <SlotsTrendChart slots={slots} />

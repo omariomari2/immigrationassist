@@ -176,7 +176,14 @@ class DataLoader:
             user = {}
         
         try:
-            resp = requests.get("http://localhost:4000/api/locations", timeout=2)
+            global_entry_api_url = os.getenv("GLOBAL_ENTRY_API_URL", "http://localhost:4000/api")
+            # Handle potential trailing slash consistency if needed, but for now exact match:
+            # The original code called http://localhost:4000/api/locations. 
+            # If ENV is base URL, we append /locations.
+             
+            # Assuming ENV is base URL like http://localhost:4000
+            base_url = os.getenv("GLOBAL_ENTRY_API_BASE_URL", "http://localhost:4000")
+            resp = requests.get(f"{base_url}/api/locations", timeout=2)
             if resp.status_code == 200:
                 locs = resp.json().get("locations", [])
                 loc_names = [l["name"] for l in locs[:10]]
@@ -187,7 +194,8 @@ class DataLoader:
         try:
             visa_type = user.get("visaType", "h1b")
             payload = {"profile": {"visaType": visa_type}}
-            resp = requests.post("http://localhost:3000/api/news", json=payload, timeout=3)
+            news_api_base_url = os.getenv("NEWS_API_BASE_URL", "http://localhost:3000")
+            resp = requests.post(f"{news_api_base_url}/api/news", json=payload, timeout=3)
             if resp.status_code == 200:
                 data = resp.json()
                 articles = data.get("articles", [])

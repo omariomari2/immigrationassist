@@ -16,7 +16,7 @@ async def startup_event():
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
+    allow_origins=os.getenv("CORS_ORIGINS", "").split(",") if os.getenv("CORS_ORIGINS") else [
         "http://localhost:5500",
         "http://127.0.0.1:5500",
         "http://localhost:5173",
