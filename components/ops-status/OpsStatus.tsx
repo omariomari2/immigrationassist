@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { MapboxMap, geocodeAddress } from './MapboxMap';
-import { getRecents, saveRecents, RECENTS_EVENT } from '../recents';
+import { getRecents, saveRecents, RECENTS_EVENT, logRecent } from '../recents';
 import type { RecentItem } from '../recents';
 
 type ResourceCategory = 'recents' | 'lawyers' | 'surgeons' | 'shelter' | 'ice';
@@ -272,15 +272,26 @@ export function OpsStatus({ onNavigateToGlobalEntry }: { onNavigateToGlobalEntry
     useEffect(() => {
         const loadRecents = async () => {
             const recents = getRecents();
-            if (!recents.length) {
+            const locationRecents = recents.filter((recent) => {
+                const hasLocation = Boolean(
+                    recent.coordinates || recent.locationQuery || recent.address || recent.city || recent.state
+                );
+                const isNavigation = recent.source === 'navigation'
+                    || recent.description?.toLowerCase().includes('visited tab');
+                return hasLocation && !isNavigation;
+            });
+            if (!locationRecents.length) {
+                if (recents.length) {
+                    saveRecents([]);
+                }
                 setRecentResources([]);
                 return;
             }
 
             let updated = false;
-            const updatedRecents = [...recents];
+            const updatedRecents = [...locationRecents];
 
-            const resources = await Promise.all(recents.map(async (recent, index) => {
+            const resources = await Promise.all(locationRecents.map(async (recent, index) => {
                 if (!recent.coordinates && recent.locationQuery) {
                     const geocoded = await geocodeAddress(recent.locationQuery);
                     if (geocoded) {
@@ -293,6 +304,8 @@ export function OpsStatus({ onNavigateToGlobalEntry }: { onNavigateToGlobalEntry
             }));
 
             if (updated) {
+                saveRecents(updatedRecents);
+            } else if (locationRecents.length !== recents.length) {
                 saveRecents(updatedRecents);
             }
 
@@ -339,6 +352,25 @@ export function OpsStatus({ onNavigateToGlobalEntry }: { onNavigateToGlobalEntry
         setDistanceInfo(null);
     };
 
+    const handleResourceSelect = (resource: ResourceItem, index: number) => {
+        setSelectedIndex(index);
+        setDistanceInfo(null);
+        if (activeResourceTab !== 'recents') {
+            logRecent({
+                title: resource.title,
+                description: resource.description,
+                address: resource.address,
+                city: resource.city,
+                state: resource.state,
+                phone: resource.phone,
+                rating: resource.rating,
+                website: resource.website,
+                coordinates: resource.coordinates,
+                source: 'ops-status'
+            });
+        }
+    };
+
     const handleDistanceClick = (index: number) => {
         if (distanceInfo?.index === index) {
             setDistanceInfo(null);
@@ -353,6 +385,30 @@ export function OpsStatus({ onNavigateToGlobalEntry }: { onNavigateToGlobalEntry
         const [lat, lng] = listing.coordinates;
         const distance = calculateDistance(userLocation[0], userLocation[1], lat, lng);
         setDistanceInfo({ index, distance: distance.toFixed(1) });
+    };
+
+    const openDirections = (resource: ResourceItem) => {
+        const locationText = [resource.address, resource.city, resource.state]
+            .filter(Boolean)
+            .join(', ');
+        const destination = resource.coordinates
+            ? `${resource.coordinates[0]},${resource.coordinates[1]}`
+            : locationText;
+
+        if (!destination) {
+            return;
+        }
+
+        const params = new URLSearchParams({
+            api: '1',
+            destination
+        });
+
+        if (userLocation) {
+            params.set('origin', `${userLocation[0]},${userLocation[1]}`);
+        }
+
+        window.open(`https://www.google.com/maps/dir/?${params.toString()}`, '_blank', 'noopener,noreferrer');
     };
 
     const targetLocation = distanceInfo
@@ -435,17 +491,10 @@ export function OpsStatus({ onNavigateToGlobalEntry }: { onNavigateToGlobalEntry
                                             const isSelected = selectedIndex === idx;
                                             const isHovered = hoveredIndex === idx;
                                             const hasCoordinates = Boolean(resource.coordinates);
-                                            const distanceLabel = !hasCoordinates
-                                                ? 'No location'
-                                                : distanceInfo?.index === idx
-                                                    ? `${distanceInfo.distance} mi`
-                                                    : userLocation
-                                                        ? 'Distance'
-                                                        : 'Enable location';
-
                                             const locationText = [resource.address, resource.city, resource.state]
                                                 .filter(Boolean)
                                                 .join(', ');
+                                            const canDirections = Boolean(resource.coordinates || locationText);
 
                                             return (
                                                 <div
@@ -456,10 +505,7 @@ export function OpsStatus({ onNavigateToGlobalEntry }: { onNavigateToGlobalEntry
                                                             ? 'border-gray-300 shadow-sm'
                                                             : 'border-gray-100'
                                                         }`}
-                                                    onClick={() => {
-                                                        setSelectedIndex(idx);
-                                                        setDistanceInfo(null);
-                                                    }}
+                                                    onClick={() => handleResourceSelect(resource, idx)}
                                                     onMouseEnter={() => setHoveredIndex(idx)}
                                                     onMouseLeave={() => setHoveredIndex(null)}
                                                 >
@@ -504,15 +550,18 @@ export function OpsStatus({ onNavigateToGlobalEntry }: { onNavigateToGlobalEntry
                                                                 <button
                                                                     onClick={(event) => {
                                                                         event.stopPropagation();
-                                                                        handleDistanceClick(idx);
+                                                                        openDirections(resource);
+                                                                        if (resource.coordinates && userLocation) {
+                                                                            handleDistanceClick(idx);
+                                                                        }
                                                                     }}
-                                                                    disabled={!hasCoordinates}
+                                                                    disabled={!canDirections}
                                                                     className={`text-[10px] px-2 py-1 rounded flex items-center gap-1 border transition-colors ${distanceInfo?.index === idx
                                                                         ? 'bg-black text-white border-black'
                                                                         : 'bg-gray-50 text-gray-500 border-gray-100 hover:text-black'
-                                                                        } ${!hasCoordinates ? 'opacity-60 cursor-not-allowed' : ''}`}
+                                                                        } ${!canDirections ? 'opacity-60 cursor-not-allowed' : ''}`}
                                                                 >
-                                                                    <Navigation size={10} /> {distanceLabel}
+                                                                    <Navigation size={10} /> Directions
                                                                 </button>
                                                             </div>
                                                         </div>

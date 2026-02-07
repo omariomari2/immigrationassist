@@ -204,7 +204,10 @@ export function MapboxMap({
                 attribution: '© Mapbox © OpenStreetMap',
                 maxZoom: 20,
                 tileSize: 512,
-                zoomOffset: -1
+                zoomOffset: -1,
+                updateWhenIdle: true,
+                updateWhenZooming: false,
+                keepBuffer: 6
             }
         ).addTo(map);
 
@@ -581,7 +584,13 @@ export function MapboxMap({
     return (
         <div
             ref={mapRef}
-            style={{ width: '100%', height, borderRadius: '12px', overflow: 'hidden' }}
+            style={{
+                width: '100%',
+                height,
+                borderRadius: '12px',
+                overflow: 'hidden',
+                backgroundColor: '#f3f4f6'
+            }}
             className="mapbox-map"
         />
     );

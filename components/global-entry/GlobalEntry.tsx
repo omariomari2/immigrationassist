@@ -9,7 +9,7 @@ import { Location, Slot, SlotResponse } from './types';
 import { sendExtensionMessage } from './extension-bridge';
 import { logRecent } from '../recents';
 
-export const GlobalEntry = () => {
+export const GlobalEntry = ({ onNavigateToOpsStatus }: { onNavigateToOpsStatus?: () => void }) => {
     const getInitialRunning = () => localStorage.getItem('ged_isRunning') === 'true';
     const getInitialSlots = () => {
         const savedRunning = localStorage.getItem('ged_isRunning') === 'true';
@@ -195,7 +195,7 @@ export const GlobalEntry = () => {
                         lastChecked={lastChecked}
                     />
                     <div className="flex-1 flex flex-col justify-end mt-auto">
-                        <ActionButtons />
+                        <ActionButtons onNavigateToOpsStatus={onNavigateToOpsStatus} />
                     </div>
                 </div>
                 <div className="lg:col-span-3">

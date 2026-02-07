@@ -4,6 +4,11 @@ import { Header } from './components/Header';
 import { Controls, KPIHeader } from './components/Controls';
 import { GlobalEntry } from './components/global-entry/GlobalEntry';
 import { OpsStatus } from './components/ops-status/OpsStatus';
+const H1BAnalytics = React.lazy(() =>
+  import('./components/projects/h1b-analytics/H1BAnalytics').then((module) => ({
+    default: module.H1BAnalytics
+  }))
+);
 // Charts available for future use:
 // import { UserGrowthChart } from './components/charts/UserGrowthChart';
 // import { DeviceTrafficChart } from './components/charts/DeviceTrafficChart';
@@ -31,9 +36,19 @@ export default function App() {
             <Controls activeTab={activeTab} onTabChange={setActiveTab} />
 
             {activeTab === TabOption.GlobalEntry ? (
-              <GlobalEntry />
+              <GlobalEntry onNavigateToOpsStatus={() => setActiveTab(TabOption.OpsStatus)} />
             ) : activeTab === TabOption.OpsStatus ? (
               <OpsStatus onNavigateToGlobalEntry={() => setActiveTab(TabOption.GlobalEntry)} />
+            ) : activeTab === TabOption.Projects ? (
+              <React.Suspense
+                fallback={
+                  <div className="bg-white rounded-3xl shadow-soft p-8 text-sm text-gray-500">
+                    Loading analytics module...
+                  </div>
+                }
+              >
+                <H1BAnalytics />
+              </React.Suspense>
             ) : (
               <KPIHeader />
             )}

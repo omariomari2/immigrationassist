@@ -2,7 +2,6 @@ import React from 'react';
 import { TabOption } from '../types';
 import { Plus, Grip, List, Calendar, RefreshCw, ChevronDown } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { logRecent } from './recents';
 
 interface ControlsProps {
   activeTab: TabOption;
@@ -30,15 +29,7 @@ export const Controls: React.FC<ControlsProps> = ({ activeTab, onTabChange }) =>
           {Object.values(TabOption).map((tab) => (
             <button
               key={tab}
-              onClick={() => {
-                logRecent({
-                  title: tab,
-                  description: 'Visited tab',
-                  address: tab,
-                  source: 'navigation'
-                });
-                onTabChange(tab);
-              }}
+              onClick={() => onTabChange(tab)}
               className="relative px-5 py-1.5 text-sm font-medium rounded-lg transition-colors z-10"
             >
               {activeTab === tab && (

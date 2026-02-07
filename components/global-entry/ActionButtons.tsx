@@ -1,7 +1,7 @@
 import React from 'react';
 import { Mail, MessageSquare, Map } from 'lucide-react';
 
-export const ActionButtons: React.FC = () => {
+export const ActionButtons: React.FC<{ onNavigateToOpsStatus?: () => void }> = ({ onNavigateToOpsStatus }) => {
     return (
         <div className="flex flex-col gap-3 mt-auto">
             <div className="flex gap-3">
@@ -21,10 +21,13 @@ export const ActionButtons: React.FC = () => {
             </div>
 
             {/* Map View Button */}
-            <button className="w-full bg-white p-3 rounded-3xl shadow-soft flex items-center justify-between hover:bg-gray-50 transition-colors group">
+            <button
+                onClick={onNavigateToOpsStatus}
+                className="w-full bg-white p-3 rounded-3xl shadow-soft flex items-center justify-between hover:bg-gray-50 transition-colors group"
+            >
                 <div className="flex items-center gap-3">
                     <span className="text-xs font-semibold text-gray-900 pl-1">
-                        View text in map
+                        View In Maps
                     </span>
                 </div>
                 <div className="w-6 h-6 rounded-full border border-gray-200 flex items-center justify-center group-hover:border-gray-400 transition-colors">
