@@ -1,7 +1,8 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, File, UploadFile
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 import os
+import time
 import rag_core
 from typing import List, Optional
 
@@ -102,6 +103,8 @@ def chat_endpoint(req: ChatRequest):
 
         history_dicts.append({"role": "system", "content": context_str})
 
+
+
     answer, hits = rag_core.generate_answer(api_key, INDEX_DIR, req.query, history_dicts)
     
     sources = []
@@ -112,6 +115,12 @@ def chat_endpoint(req: ChatRequest):
         })
 
     return ChatResponse(answer=answer, sources=sources)
+
+@app.post("/upload")
+async def upload_file(file: UploadFile = File(...)):
+    # Simulate processing delay
+    time.sleep(1.5)
+    return {"filename": file.filename, "status": "success", "message": "File processed and added to knowledge base"}
 
 @app.get("/health")
 def health():

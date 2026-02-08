@@ -17,7 +17,7 @@ DEFAULT_CODE_EXTS = {
 DEFAULT_CODE_FILENAMES = {"readme", "readme.md", "license", "license.md", "dockerfile", "makefile"}
 DEFAULT_EXCLUDE_DIRS = {
     ".git", "node_modules", ".venv", "dist", "build", "public", "data",
-    "csvs", "corpus", "index", "index_codebase", "__pycache__", ".cache", ".next", ".vite",
+    "corpus", "index", "index_codebase", "__pycache__", ".cache", ".next", ".vite",
     ".idea", ".vscode", "logs"
 }
 DEFAULT_EXCLUDE_FILES = {".groq_key"}
