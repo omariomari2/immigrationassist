@@ -1,6 +1,6 @@
 import React from 'react';
 import { MegaTab, TabOption } from '../types';
-import { Calendar, RefreshCw, ChevronDown } from 'lucide-react';
+import { Clock, User as UserIcon } from 'lucide-react';
 import { NavIcons } from './NavIcons';
 import { PageHeader } from './PageHeader';
 
@@ -35,22 +35,25 @@ export const Controls: React.FC<ControlsProps> = ({ activeMegaTab, activeTab, on
 };
 
 import { useUser } from './UserContext';
-import { calculateVisaCountdown } from '../utils/dateUtils';
+import { calculateVisaWeeksCountdown } from '../utils/dateUtils';
 
 export const KPIHeader: React.FC = () => {
   const { user } = useUser();
   const userName = user ? `${user.firstName} ${user.lastName}` : 'Guest';
+  const [showCountdown, setShowCountdown] = React.useState(false);
 
-  let headerTitle = "Welcome back";
-  let headerValue = userName;
-  let subValue = null;
+  const hasExpiry = Boolean(user?.visaExpirationDate);
+  const countdownValue = hasExpiry ? calculateVisaWeeksCountdown(user!.visaExpirationDate!) : '';
+  const canShowCountdown = hasExpiry && countdownValue !== '';
 
-  if (user?.visaExpirationDate) {
-    headerTitle = "Visa Expiration Countdown";
-    headerValue = calculateVisaCountdown(user.visaExpirationDate);
-    // If it returns a string like "X Months, Y Days", we display that.
-    // If "Expired", we display that.
-  }
+  React.useEffect(() => {
+    if (!canShowCountdown) {
+      setShowCountdown(false);
+    }
+  }, [canShowCountdown]);
+
+  const headerTitle = showCountdown && canShowCountdown ? "Visa Expiry Countdown" : "Welcome back";
+  const headerValue = showCountdown && canShowCountdown ? countdownValue : userName;
 
   return (
     <div className="flex flex-col gap-1 mb-8">
@@ -62,16 +65,21 @@ export const KPIHeader: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex gap-2 mb-2">
-          <button className="p-2 bg-white rounded-lg text-gray-400 hover:text-gray-600 shadow-sm transition-colors">
-            <RefreshCw className="w-3.5 h-3.5" />
-          </button>
-          <button className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-50 shadow-sm transition-colors group">
-            <Calendar className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-600" />
-            <span>Nov 1' 24 - Dec 1' 24</span>
-            <ChevronDown className="w-3 h-3 text-gray-400" />
-          </button>
-        </div>
+        {canShowCountdown && (
+          <div className="flex gap-2 mb-2">
+            <button
+              onClick={() => setShowCountdown((prev) => !prev)}
+              className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg text-[10px] font-semibold text-gray-600 border border-gray-200 hover:bg-gray-50 shadow-sm transition-colors"
+            >
+              {showCountdown ? (
+                <UserIcon className="w-3.5 h-3.5 text-gray-500" />
+              ) : (
+                <Clock className="w-3.5 h-3.5 text-gray-500" />
+              )}
+              <span>{showCountdown ? 'Show Name' : 'Show Countdown'}</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

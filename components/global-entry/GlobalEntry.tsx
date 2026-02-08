@@ -231,7 +231,10 @@ export const GlobalEntry = ({ onNavigateToOpsStatus, onNavigateToProjects, showA
                             </div>
                         </div>
                     )}
-                    <MostRecentSlot mostRecentSlot={slots.length > 0 ? slots[0].timestamp : null} />
+                    <MostRecentSlot
+                        mostRecentSlot={slots.length > 0 ? slots[0].timestamp : null}
+                        profileMode={showAccountInfo}
+                    />
                     {showAccountInfo ? (
                         <AccountInfo />
                     ) : (

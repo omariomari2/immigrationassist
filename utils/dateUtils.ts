@@ -51,3 +51,27 @@ export function calculateVisaCountdown(expirationDate: string): string {
     if (parts.length === 0) return 'Is today';
     return parts.join(', ');
 }
+
+export function calculateVisaWeeksCountdown(expirationDate: string): string {
+    if (!expirationDate) return '';
+
+    const MS_PER_DAY = 1000 * 60 * 60 * 24;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const expiration = new Date(`${expirationDate}T00:00:00`);
+    if (isNaN(expiration.getTime())) return '';
+    expiration.setHours(0, 0, 0, 0);
+
+    const diffMs = expiration.getTime() - today.getTime();
+    if (diffMs < 0) return 'Expired';
+
+    const diffDays = Math.ceil(diffMs / MS_PER_DAY);
+    const weeks = Math.floor(diffDays / 7);
+    const days = diffDays % 7;
+
+    const weekLabel = `${weeks} ${weeks === 1 ? 'Wk' : 'Wks'}`;
+    const dayLabel = `${days} ${days === 1 ? 'Day' : 'Days'}`;
+
+    return `${weekLabel}, ${dayLabel}`;
+}

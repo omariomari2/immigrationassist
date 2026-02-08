@@ -1,6 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle, Clock } from 'lucide-react';
+import { CheckCircle, Clock, User } from 'lucide-react';
+import { useUser } from '../UserContext';
+import { calculateVisaWeeksCountdown } from '../../utils/dateUtils';
 
 interface StatusCardProps {
     mostRecentSlot: string | null;
@@ -8,26 +10,72 @@ interface StatusCardProps {
     isRunning: boolean;
 }
 
-export const MostRecentSlot: React.FC<Pick<StatusCardProps, 'mostRecentSlot'>> = ({ mostRecentSlot }) => {
+export const MostRecentSlot: React.FC<Pick<StatusCardProps, 'mostRecentSlot'> & { profileMode?: boolean }> = ({ mostRecentSlot, profileMode = false }) => {
+    const { user } = useUser();
+    const [showCountdown, setShowCountdown] = React.useState(false);
+    const lastExpiryRef = React.useRef<string | null>(null);
+
+    const userName = user ? `${user.firstName} ${user.lastName}` : 'Guest';
+    const hasExpiry = Boolean(user?.visaExpirationDate);
+    const countdownValue = hasExpiry ? calculateVisaWeeksCountdown(user!.visaExpirationDate!) : '';
+    const canShowCountdown = profileMode && hasExpiry && countdownValue !== '';
+
+    React.useEffect(() => {
+        if (!canShowCountdown) {
+            setShowCountdown(false);
+            lastExpiryRef.current = null;
+            return;
+        }
+        if (user?.visaExpirationDate !== lastExpiryRef.current) {
+            setShowCountdown(true);
+            lastExpiryRef.current = user?.visaExpirationDate || null;
+        }
+    }, [canShowCountdown, user?.visaExpirationDate]);
+
     const formatDate = (dateStr: string) => {
         return new Date(dateStr).toLocaleDateString([], { month: 'short', day: 'numeric' });
     };
 
+    const headerTitle = profileMode
+        ? (showCountdown && canShowCountdown ? 'Visa Expiry Countdown' : 'Profile Overview')
+        : 'Most Recent Slot';
+
+    const headerValue = profileMode
+        ? (showCountdown && canShowCountdown ? countdownValue : userName)
+        : (mostRecentSlot ? formatDate(mostRecentSlot) : '--');
+
     return (
         <div className="flex flex-col">
-            <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
-                Most Recent Slot
-            </h3>
+            <div className="flex items-center justify-between mb-2">
+                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                    {headerTitle}
+                </h3>
+                {canShowCountdown && (
+                    <button
+                        onClick={() => setShowCountdown((prev) => !prev)}
+                        className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-semibold text-gray-500 border border-gray-200 hover:bg-gray-50 transition-colors"
+                    >
+                        {showCountdown ? (
+                            <User className="w-3 h-3 text-gray-500" />
+                        ) : (
+                            <Clock className="w-3 h-3 text-gray-500" />
+                        )}
+                        <span>{showCountdown ? 'Name' : 'Countdown'}</span>
+                    </button>
+                )}
+            </div>
             <div className="flex items-baseline gap-2">
                 <motion.div
-                    key={mostRecentSlot || 'none'}
+                    key={headerValue || 'none'}
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="text-6xl sm:text-7xl font-semibold tracking-tight text-gray-800 leading-none"
+                    className={profileMode
+                        ? "text-4xl sm:text-5xl font-semibold tracking-tight text-gray-800 leading-none"
+                        : "text-6xl sm:text-7xl font-semibold tracking-tight text-gray-800 leading-none"}
                 >
-                    {mostRecentSlot ? formatDate(mostRecentSlot) : '--'}
+                    {headerValue}
                 </motion.div>
-                {mostRecentSlot && (
+                {!profileMode && mostRecentSlot && (
                     <span className="text-xl text-gray-400 font-medium">
                         {new Date(mostRecentSlot).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>

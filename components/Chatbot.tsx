@@ -18,7 +18,7 @@ export const Chatbot: React.FC = () => {
     const { user } = useUser();
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<Message[]>([
-        { role: 'assistant', content: 'Hello! I can answer questions about this Quantro codebase and data. Ask me anything.' }
+        { role: 'assistant', content: 'Hello! I am Garvey. I can answer questions about this Quantro codebase and data. Ask me anything.' }
     ]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -135,7 +135,7 @@ export const Chatbot: React.FC = () => {
                                     <Bot size={18} />
                                 </div>
                                 <div>
-                                    <h3 className="text-sm font-semibold text-gray-900">Quantro Assistant</h3>
+                                    <h3 className="text-sm font-semibold text-gray-900">Garvey</h3>
                                     <p className="text-[10px] text-gray-500">Powered by Groq & RAG</p>
                                 </div>
                             </div>

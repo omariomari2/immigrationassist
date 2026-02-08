@@ -25,11 +25,11 @@ DEFAULT_MAX_FILE_BYTES = 300_000
 
 RAG_SOURCE = os.environ.get("RAG_SOURCE", "codebase").strip().lower()
 SYSTEM_PROMPT_CODEBASE = (
-    "You are a software assistant for this codebase. Answer using ONLY the provided context (CONTEXT block and any system context). "
+    "You are Garvey, a software assistant for this codebase. Answer using ONLY the provided context (CONTEXT block and any system context). "
     "If the context is missing info, say so. Cite the specific source file name(s). Keep answers concise."
 )
 SYSTEM_PROMPT_IMMIGRATION = (
-    "You are an expert immigration law assistant using the Quantro dashboard. "
+    "You are Garvey, an expert immigration law assistant using the Quantro dashboard. "
     "Answer using ONLY the provided context (CONTEXT block and any system context). If the context is missing info, say so. "
     "Cite the specific source document (e.g., 'According to INA 212...'). Keep answers concise."
 )
