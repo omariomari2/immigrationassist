@@ -283,6 +283,7 @@ export const GlobalEntry = ({ onNavigateToOpsStatus, onNavigateToProjects, showA
                                 lastChecked={lastChecked}
                                 locationId={monitorParams?.locationId}
                                 locationName={locations.find((l: Location) => l.id.toString() === monitorParams?.locationId)?.name}
+                                locationShortName={locations.find((l: Location) => l.id.toString() === monitorParams?.locationId)?.shortName}
                                 tzData={locations.find((l: Location) => l.id.toString() === monitorParams?.locationId)?.tzData}
                             />
 

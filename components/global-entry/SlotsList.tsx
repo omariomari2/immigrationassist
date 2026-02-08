@@ -12,6 +12,7 @@ interface SlotsListProps {
     lastChecked: Date | null;
     locationId?: string;
     locationName?: string;
+    locationShortName?: string;
     tzData?: string;
 }
 
@@ -21,6 +22,7 @@ export const SlotsList: React.FC<SlotsListProps> = ({
     lastChecked,
     locationId,
     locationName,
+    locationShortName,
     tzData
 }) => {
     const bookingWindowRef = useRef<Window | null>(null);
@@ -56,6 +58,7 @@ export const SlotsList: React.FC<SlotsListProps> = ({
         sendExtensionMessage('BOOK_APPT', {
             locationId,
             locationName,
+            locationShortName,
             slotTimestamp: slot.timestamp,
             slotDisplay: `${formatDate(slot.timestamp)} ${formatTime(slot.timestamp)}`,
             tzData: tzData || ''

@@ -16,6 +16,9 @@
         "service_worker": "background.js",
         "type": "module"
     },
+    "host_permissions": [
+        "https://ttp.cbp.dhs.gov/*"
+    ],
     "permissions": [
         "storage",
         "alarms",
@@ -34,6 +37,15 @@
                 "content/bridge.js"
             ],
             "run_at": "document_start"
+        },
+        {
+            "matches": [
+                "https://ttp.cbp.dhs.gov/schedulerui/*"
+            ],
+            "js": [
+                "content/booking.js"
+            ],
+            "run_at": "document_idle"
         }
     ]
 }
