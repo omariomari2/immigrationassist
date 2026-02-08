@@ -139,35 +139,37 @@ export const SlotsList: React.FC<SlotsListProps> = ({
                 ) : (
                     <div className="overflow-auto h-full pr-2 -mr-2 space-y-2">
                         <AnimatePresence>
-                            {slots.map((slot, i) => (
-                                <motion.div
-                                    key={slot.timestamp}
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, scale: 0.95 }}
-                                    transition={{ delay: i * 0.05 }}
-                                    className="group flex items-center justify-between p-3 rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all bg-white"
-                                >
-                                    <div className="flex items-center gap-4">
-                                        <div className="flex flex-col">
-                                            <div className="text-xs font-semibold text-gray-900 flex items-center gap-1.5">
-                                                <Calendar className="w-3 h-3 text-gray-400" />
-                                                {formatDate(slot.timestamp)}
-                                            </div>
-                                            <div className="text-[10px] text-gray-500 pl-4.5">
-                                                {formatTime(slot.timestamp)}
+                            {slots
+                                .filter(s => s.timestamp) // Filter out empty timestamps
+                                .map((slot, i) => (
+                                    <motion.div
+                                        key={`${slot.timestamp}-${i}`} // Composite key for uniqueness
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, scale: 0.95 }}
+                                        transition={{ delay: i * 0.05 }}
+                                        className="group flex items-center justify-between p-3 rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all bg-white"
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex flex-col">
+                                                <div className="text-xs font-semibold text-gray-900 flex items-center gap-1.5">
+                                                    <Calendar className="w-3 h-3 text-gray-400" />
+                                                    {formatDate(slot.timestamp)}
+                                                </div>
+                                                <div className="text-[10px] text-gray-500 pl-4.5">
+                                                    {formatTime(slot.timestamp)}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    <button
-                                        onClick={() => handleBook(slot)}
-                                        className="px-3 py-1.5 bg-black text-white text-xs font-medium rounded-lg flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                                    >
-                                        Book <ExternalLink className="w-3 h-3" />
-                                    </button>
-                                </motion.div>
-                            ))}
+                                        <button
+                                            onClick={() => handleBook(slot)}
+                                            className="px-3 py-1.5 bg-black text-white text-xs font-medium rounded-lg flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        >
+                                            Book <ExternalLink className="w-3 h-3" />
+                                        </button>
+                                    </motion.div>
+                                ))}
                         </AnimatePresence>
                     </div>
                 )}

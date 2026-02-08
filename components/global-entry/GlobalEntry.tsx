@@ -6,7 +6,7 @@ import { SlotsTrendChart } from './SlotsTrendChart';
 import { ActionButtons } from './ActionButtons';
 import { fetchLocations, fetchSlots } from './api';
 import { Location, Slot, SlotResponse } from './types';
-import { sendExtensionMessage } from './extension-bridge';
+import { sendExtensionMessage, waitForExtension, isExtensionInstalled } from './extension-bridge';
 import { logRecent } from '../recents';
 import { AccountInfo } from './AccountInfo';
 import { RecentActivities } from '../profile/RecentActivities';
@@ -49,6 +49,9 @@ export const GlobalEntry = ({ onNavigateToOpsStatus, onNavigateToProjects, showA
         return saved ? JSON.parse(saved) : null;
     });
 
+    const [isExtensionReady, setIsExtensionReady] = useState(false);
+    const [extensionCheckComplete, setExtensionCheckComplete] = useState(false);
+
     // Persist state changes
     useEffect(() => {
         localStorage.setItem('ged_isRunning', String(isRunning));
@@ -88,13 +91,23 @@ export const GlobalEntry = ({ onNavigateToOpsStatus, onNavigateToProjects, showA
 
     // Extension Integration
     useEffect(() => {
-        // Request initial status
-        sendExtensionMessage('REQ_STATUS');
+        // Check for extension presence
+        waitForExtension(2000).then((ready) => {
+            setIsExtensionReady(ready);
+            setExtensionCheckComplete(true);
+            if (ready) {
+                // Request initial status only if ready
+                sendExtensionMessage('REQ_STATUS');
+            }
+        });
 
         const handleMessage = (event: MessageEvent) => {
             if (event.source !== window) return;
             const data = event.data || {};
             if (data.source !== 'ged-ext') return;
+
+            // If we receive a message, the extension is definitely ready
+            if (!isExtensionReady) setIsExtensionReady(true);
 
             if (data.type === 'EXT_STATUS') {
                 const payload = data.payload || {};
@@ -129,7 +142,6 @@ export const GlobalEntry = ({ onNavigateToOpsStatus, onNavigateToProjects, showA
             }
 
             if (data.type === 'BOOK_APPT_ACK') {
-                // Handle booking ack if needed (e.g. notifications)
                 console.log('Booking request acknowledged by extension');
             }
         };
@@ -138,26 +150,24 @@ export const GlobalEntry = ({ onNavigateToOpsStatus, onNavigateToProjects, showA
         return () => window.removeEventListener('message', handleMessage);
     }, []);
 
-    const fetchData = async () => {
-        if (!monitorParams) return;
-
-        setLoading(true);
-        const result = await fetchSlots(
-            monitorParams.locationId,
-            monitorParams.startDate,
-            monitorParams.endDate
-        );
-
-        setLastChecked(new Date());
-        setLoading(false);
-
-        if (result) {
-            setSlots(result.slots);
-        }
-    };
+    // ... existing fetchData
 
     const handleStart = (locationId: string, startDate: string, endDate: string) => {
+        if (!isExtensionReady) {
+            if (!confirm("The Global Entry Chrome Extension is not detected.\n\nMonitoring requires the extension to be installed and active.\n\nDo you want to retry the connection check?")) {
+                return;
+            }
+            // Retry check
+            if (isExtensionInstalled()) {
+                setIsExtensionReady(true);
+            } else {
+                alert("Extension still not found. Please ensure it is loaded in chrome://extensions");
+                return;
+            }
+        }
+
         console.log('[GlobalEntry] Starting monitoring', { locationId, startDate, endDate });
+        // ... rest of start logic
         const selectedLocation = locations.find((location: Location) => location.id.toString() === locationId);
         const params = { locationId, startDate, endDate };
         setMonitorParams(params);
@@ -177,6 +187,29 @@ export const GlobalEntry = ({ onNavigateToOpsStatus, onNavigateToProjects, showA
         });
     };
 
+    // ... rest of component
+
+
+    const fetchData = async () => {
+        if (!monitorParams) return;
+
+        setLoading(true);
+        const result = await fetchSlots(
+            monitorParams.locationId,
+            monitorParams.startDate,
+            monitorParams.endDate
+        );
+
+        setLastChecked(new Date());
+        setLoading(false);
+
+        if (result) {
+            setSlots(result.slots);
+        }
+    };
+
+
+
     const handleStop = () => {
         console.log('[GlobalEntry] Stopping monitoring');
         setIsRunning(false);
@@ -189,6 +222,15 @@ export const GlobalEntry = ({ onNavigateToOpsStatus, onNavigateToProjects, showA
         <div className="flex flex-col gap-6">
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 <div className="lg:col-span-1 flex flex-col gap-6">
+                    {extensionCheckComplete && !isExtensionReady && (
+                        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-center gap-3">
+                            <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                            <div className="flex-1">
+                                <p className="text-xs font-bold text-red-800 uppercase tracking-wide">Extension Disconnected</p>
+                                <p className="text-[10px] text-red-600 mt-0.5">Please update the extension via chrome://extensions</p>
+                            </div>
+                        </div>
+                    )}
                     <MostRecentSlot mostRecentSlot={slots.length > 0 ? slots[0].timestamp : null} />
                     {showAccountInfo ? (
                         <AccountInfo />

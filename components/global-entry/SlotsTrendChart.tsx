@@ -25,7 +25,10 @@ export const SlotsTrendChart: React.FC<SlotsTrendChartProps> = ({ slots }) => {
         const counts: Record<string, number> = {};
 
         slots.forEach(slot => {
-            const dateKey = new Date(slot.timestamp).toISOString().split('T')[0]; // YYYY-MM-DD
+            if (!slot.timestamp) return;
+            const dateObj = new Date(slot.timestamp);
+            if (isNaN(dateObj.getTime())) return;
+            const dateKey = dateObj.toISOString().split('T')[0]; // YYYY-MM-DD
             counts[dateKey] = (counts[dateKey] || 0) + 1;
         });
 
@@ -73,7 +76,9 @@ export const SlotsTrendChart: React.FC<SlotsTrendChartProps> = ({ slots }) => {
                 Total Openings<br />
                 <span className="font-semibold text-gray-900 text-lg">
                     {slots.filter(s => {
+                        if (!s.timestamp) return false;
                         const d = new Date(s.timestamp);
+                        if (isNaN(d.getTime())) return false;
                         const now = new Date();
                         const diffTime = Math.abs(d.getTime() - now.getTime());
                         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));

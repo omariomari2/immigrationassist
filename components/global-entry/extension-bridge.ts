@@ -14,3 +14,27 @@ export const sendExtensionMessage = (type: ExtensionMessage['type'], payload?: a
         '*'
     );
 };
+
+export const isExtensionInstalled = (): boolean => {
+    return !!document.getElementById('ged-extension-installed');
+};
+
+export const waitForExtension = (timeoutMs = 2000): Promise<boolean> => {
+    return new Promise((resolve) => {
+        if (isExtensionInstalled()) {
+            resolve(true);
+            return;
+        }
+
+        const start = Date.now();
+        const check = setInterval(() => {
+            if (isExtensionInstalled()) {
+                clearInterval(check);
+                resolve(true);
+            } else if (Date.now() - start > timeoutMs) {
+                clearInterval(check);
+                resolve(false);
+            }
+        }, 100);
+    });
+};

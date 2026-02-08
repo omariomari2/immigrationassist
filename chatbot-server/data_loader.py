@@ -149,11 +149,20 @@ class DataLoader:
         context_parts = []
         for emp in matches:
             yearly = emp.get("yearlyHistory") or []
-            recent_year = max(yearly, key=lambda y: y.get("year", 0), default={})
-            approvals = recent_year.get("approvals", 0)
-            denials = recent_year.get("denials", 0)
-            recent_total = approvals + denials
-            recent_rate = (approvals / recent_total * 100) if recent_total > 0 else 0
+            
+            # Sort history by year descending (newest first)
+            sorted_history = sorted(yearly, key=lambda y: y.get("year", 0), reverse=True)
+            
+            history_lines = []
+            for y_data in sorted_history:
+                year = y_data.get("year")
+                apps = y_data.get("approvals", 0)
+                dens = y_data.get("denials", 0)
+                total = apps + dens
+                rate = (apps / total * 100) if total > 0 else 0
+                history_lines.append(f"  - {year}: {apps} approvals, {dens} denials ({rate:.1f}%)")
+            
+            history_str = "\n".join(history_lines)
 
             overall_rate = emp.get("approvalRate")
             overall_denial = emp.get("denialRate")
@@ -163,7 +172,7 @@ class DataLoader:
                 f"Location: {emp.get('city')}, {emp.get('state')} {emp.get('zipCode', '')}\n"
                 f"Overall Approval Rate: {overall_rate}% (Denial Rate: {overall_denial}%)\n"
                 f"Total Cases: {emp.get('totalCases')} (Approvals: {emp.get('totalApprovals')}, Denials: {emp.get('totalDenials')})\n"
-                f"Most Recent Year: {recent_year.get('year')} (Approvals/Denials: {approvals}/{denials}, Rate: {recent_rate:.1f}%)\n"
+                f"Yearly History:\n{history_str}\n"
             )
             context_parts.append(summary)
 
