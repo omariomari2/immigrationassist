@@ -20,7 +20,7 @@
 
 ## 4. Human Centered Design
 - **Personalization:** The **"Source of Truth"** feature allows users to upload their own documents, recognizing that every immigrant's case is unique.
-- **Anxiety Reduction:** The **"Ops Status"** dashboard (monitoring I-94s, visa dates) directly addresses the **"anxiety"** and **"mental load"** mentioned in the pitch.
+- **Anxiety Reduction:** The **"Extend"** dashboard (monitoring I-94s, visa dates) directly addresses the **"anxiety"** and **"mental load"** mentioned in the pitch.
 - **Design Choices:**
     - **Visual Clarity:** Components like `SlotsTrendChart` and `H1BStatsChart` simplify complex data into understandable visuals.
     - **Feedback:** The UI is rich with loading states, success notifications, and clear error handling, which is crucial for users already under stress.
