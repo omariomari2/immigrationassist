@@ -1,5 +1,5 @@
 ## 1. Racial Equity Impact
-- **Systemic Barriers:** The project explicitly identifies systemic barriers in `top_level_pitch.md` (*"The Problem: Systemic Inequity," "Time Tax," "bureaucratic violence"*).
+- **Systemic Barriers:** The project explicitly identifies systemic barriers in (*"Systemic Inequity," "Time Tax," "bureaucratic violence"*).
 - **Global Awareness:** Immigration shows a deep awareness of how specific nationalities and racial groups (e.g., from African and Middle Eastern nations) are disproportionately affected by policies.
 - **Meaningful Addressal:**
     - **Legal Empowerment:** The **"Source of Truth"** module (RAG-powered legal AI) democratizes access to expensive legal knowledge, directly countering the "wealth gap" in immigration defense.
